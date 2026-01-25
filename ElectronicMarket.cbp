@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="ElectronicMarket" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/ElectronicMarket" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Option projectLinkerOptionsRelation="2" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/ElectronicMarket" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Option projectLinkerOptionsRelation="2" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="`wx-config --cflags`" />
+			<Add option="-Wall" />
+		</Compiler>
+		<Linker>
+			<Add option="`wx-config --libs`" />
+		</Linker>
+		<Unit filename="AddProductDialog.cpp" />
+		<Unit filename="AddProductDialog.h" />
+		<Unit filename="AdminProductsFrame.cpp" />
+		<Unit filename="AdminProductsFrame.h" />
+		<Unit filename="CatalogueFrame.cpp" />
+		<Unit filename="CatalogueFrame.h" />
+		<Unit filename="ElectronicMarket.cbp" />
+		<Unit filename="ElectronicMarket.depend" />
+		<Unit filename="ElectronicMarketApp.cpp" />
+		<Unit filename="ElectronicMarketApp.h" />
+		<Unit filename="ElectronicMarketMain.cpp" />
+		<Unit filename="ElectronicMarketMain.h" />
+		<Unit filename="LivreurFrame.cpp" />
+		<Unit filename="LivreurFrame.h" />
+		<Unit filename="LoginDialog.cpp" />
+		<Unit filename="LoginDialog.h" />
+		<Unit filename="PanierDialog.cpp" />
+		<Unit filename="PanierDialog.h" />
+		<Unit filename="ServiceClientFrame.cpp" />
+		<Unit filename="ServiceClientFrame.h" />
+		<Unit filename="wxsmith/ElectronicMarketframe.wxs" />
+		<Extensions>
+			<wxsmith version="1">
+				<gui name="wxWidgets" src="ElectronicMarketApp.cpp" main="ElectronicMarketFrame" init_handlers="necessary" language="CPP" />
+				<resources>
+					<wxFrame wxs="wxsmith/ElectronicMarketframe.wxs" src="ElectronicMarketMain.cpp" hdr="ElectronicMarketMain.h" fwddecl="0" i18n="1" name="ElectronicMarketFrame" language="CPP" />
+				</resources>
+			</wxsmith>
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

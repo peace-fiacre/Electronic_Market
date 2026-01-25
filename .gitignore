@@ -1,0 +1,27 @@
+# Dossiers de compilation
+bin/
+obj/
+
+# Fichiers compilés
+*.o
+*.exe
+*.out
+*.app
+
+# Fichiers wxWidgets / Code::Blocks
+*.depend
+*.layout
+wxsmith/
+
+# Fichiers temporaires
+*~
+*.log
+*.tmp
+
+# IDE / éditeurs
+.vscode/
+.idea/
+
+# Système
+.DS_Store
+Thumbs.db
