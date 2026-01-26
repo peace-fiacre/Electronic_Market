@@ -1,41 +1,53 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
+
+
 #ifndef ADDPRODUCTDIALOG_H
 #define ADDPRODUCTDIALOG_H
 
 #include <wx/wx.h>
-#include <wx/spinctrl.h>
-
-struct ProductData {
-    wxString name;
-    wxString category;
-    int price;
-    int stock;
-    wxString description;
-    bool active;
-};
 
 class AddProductDialog : public wxDialog
 {
 public:
-    AddProductDialog(wxWindow* parent, const wxString& title = wxT("Ajouter un produit"));
+    AddProductDialog(wxWindow* parent);
     virtual ~AddProductDialog();
 
-    ProductData GetProductData() const { return m_productData; }
-    void SetProductData(const ProductData& data);
+    wxString GetProductName() { return m_productName; }
+    wxString GetCategory() { return m_category; }
+    wxString GetDescription() { return m_description; }
+    wxString GetPrice() { return m_price; }
+    wxString GetStock() { return m_stock; }
 
 private:
     wxTextCtrl* m_nameCtrl;
-    wxChoice* m_categoryChoice;
-    wxSpinCtrl* m_priceCtrl;
-    wxSpinCtrl* m_stockCtrl;
     wxTextCtrl* m_descriptionCtrl;
-    wxCheckBox* m_activeCheck;
+    wxChoice* m_categoryChoice;
+    wxTextCtrl* m_priceCtrl;
+    wxTextCtrl* m_stockCtrl;
 
-    ProductData m_productData;
+    wxString m_productName;
+    wxString m_description;
+    wxString m_category;
+    wxString m_price;
+    wxString m_stock;
 
     void OnOK(wxCommandEvent& event);
     void OnCancel(wxCommandEvent& event);
 
+    enum
+    {
+        ID_OK_BTN = wxID_HIGHEST + 1,
+        ID_CANCEL_BTN
+    };
+
     wxDECLARE_EVENT_TABLE();
 };
 
-#endif // ADDPRODUCTDIALOG_H
+#endif

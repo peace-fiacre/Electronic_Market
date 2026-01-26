@@ -1,3 +1,12 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
+
 #ifndef LIVREURFRAME_H
 #define LIVREURFRAME_H
 

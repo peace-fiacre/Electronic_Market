@@ -1,3 +1,12 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
+
 #ifndef SERVICECLIENTFRAME_H
 #define SERVICECLIENTFRAME_H
 
@@ -14,21 +23,21 @@ public:
 private:
     wxPanel* m_panel;
     wxNotebook* m_notebook;
-    
+
     // Page Réclamations
     wxPanel* m_reclamationsPage;
     wxListCtrl* m_reclamationsList;
     wxTextCtrl* m_searchCommandeCtrl;
-    
+
     // Page Retours
     wxPanel* m_retoursPage;
     wxListCtrl* m_retoursList;
-    
+
     void CreateReclamationsPage();
     void CreateRetoursPage();
     void PopulateReclamations();
     void PopulateRetours();
-    
+
     void OnRechercher(wxCommandEvent& event);
     void OnTraiterReclamation(wxCommandEvent& event);
     void OnInitierRetour(wxCommandEvent& event);
@@ -36,7 +45,7 @@ private:
     void OnRefuserRetour(wxCommandEvent& event);
     void OnTraiterRemboursement(wxCommandEvent& event);
     void OnContacterClient(wxCommandEvent& event);
-    
+
     enum
     {
         ID_RECHERCHER = wxID_HIGHEST + 1,
@@ -47,7 +56,7 @@ private:
         ID_REMBOURSER,
         ID_CONTACTER
     };
-    
+
     wxDECLARE_EVENT_TABLE();
 };
 

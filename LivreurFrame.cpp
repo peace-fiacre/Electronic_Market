@@ -1,4 +1,14 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
+
 #include "LivreurFrame.h"
+#include "DatabaseManager.h"
 
 wxBEGIN_EVENT_TABLE(LivreurFrame, wxFrame)
     EVT_LIST_ITEM_SELECTED(wxID_ANY, LivreurFrame::OnLivraisonSelected)
@@ -120,40 +130,39 @@ LivreurFrame::~LivreurFrame()
 {
 }
 
+
 void LivreurFrame::PopulateLivraisons()
 {
-    struct Livraison {
-        const char* tracking;
-        const char* client;
-        const char* address;
-        const char* status;
-    };
+    m_livraisonsList->DeleteAllItems();
 
-    Livraison livraisons[] = {
-        {"TRK-2026-001", "AHOUANSOU Olivier", "Quartier Agla, Rue 123, Cotonou", "En attente"},
-        {"TRK-2026-002", "HOUNGUEVOU Blandine", "Akpakpa, Rue des Palmiers, Cotonou", "En cours"},
-        {"TRK-2026-003", "EGOUDJOBI Peace", "Fidjrosse, Avenue de la Plage, Cotonou", "En attente"},
-        {"TRK-2026-004", "SOGBOHOSSOU Medesu", "Godomey, Carre 450, Abomey-Calavi", "Acceptee"},
-        {"TRK-2026-005", "Client Test", "Cadjehoun, Rue 789, Cotonou", "En attente"}
-    };
+    // CHARGER DEPUIS LA BASE DE DONNÉES
+    std::vector<Order> orders = DatabaseManager::GetInstance().GetPendingDeliveries();
 
-    for(int i = 0; i < 5; i++)
+    for(size_t i = 0; i < orders.size(); i++)
     {
-        long index = m_livraisonsList->InsertItem(i, wxString::Format("%d", i + 1));
-        m_livraisonsList->SetItem(index, 1, livraisons[i].tracking);
-        m_livraisonsList->SetItem(index, 2, livraisons[i].client);
-        m_livraisonsList->SetItem(index, 3, livraisons[i].address);
-        m_livraisonsList->SetItem(index, 4, livraisons[i].status);
+        const Order& o = orders[i];
 
-        wxString statusStr(livraisons[i].status);
-        if(statusStr == "En attente")
+        long index = m_livraisonsList->InsertItem(i, wxString::Format("%d", o.id));
+        m_livraisonsList->SetItem(index, 1, o.numero_suivi);
+        m_livraisonsList->SetItem(index, 2, "Client " + wxString::Format("%d", o.id_client));
+        m_livraisonsList->SetItem(index, 3, o.adresse);
+        m_livraisonsList->SetItem(index, 4, o.statut);
+
+        if(o.statut == "En attente")
             m_livraisonsList->SetItemTextColour(index, wxColour(255, 140, 0));
-        else if(statusStr == "En cours")
+        else if(o.statut == "En cours")
             m_livraisonsList->SetItemTextColour(index, wxColour(0, 123, 255));
-        else if(statusStr == "Acceptee")
+        else
             m_livraisonsList->SetItemTextColour(index, wxColour(40, 167, 69));
     }
+
+    m_statusText->SetLabel(wxString::Format("%zu livraisons en attente", orders.size()));
 }
+
+
+
+
+
 
 void LivreurFrame::OnLivraisonSelected(wxListEvent& event)
 {
@@ -242,11 +251,13 @@ void LivreurFrame::OnConfirmer(wxCommandEvent& event)
     if(selected == -1)
     {
         wxMessageBox("Veuillez selectionner une livraison.",
-                     "Aucune selection",
-                     wxOK | wxICON_WARNING,
-                     this);
+                     "Aucune selection", wxOK | wxICON_WARNING, this);
         return;
     }
+
+    wxString idStr = m_livraisonsList->GetItemText(selected, 0);
+    long id;
+    idStr.ToLong(&id);
 
     wxString numeroSuivi = m_livraisonsList->GetItemText(selected, 1);
     wxString client = m_livraisonsList->GetItemText(selected, 2);
@@ -256,9 +267,7 @@ void LivreurFrame::OnConfirmer(wxCommandEvent& event)
         "N° de suivi : " + numeroSuivi + "\n\n"
         "Cette action est irreversible.",
         "Confirmation de livraison",
-        wxYES_NO | wxICON_QUESTION,
-        this
-    );
+        wxYES_NO | wxICON_QUESTION, this);
 
     if(response == wxYES)
     {
@@ -275,22 +284,32 @@ void LivreurFrame::OnConfirmer(wxCommandEvent& event)
 
             if(!code.IsEmpty())
             {
-                m_livraisonsList->SetItem(selected, 4, "Livree");
-                m_livraisonsList->SetItemTextColour(selected, wxColour(0, 200, 0));
+                // METTRE À JOUR EN BASE DE DONNÉES
+                if(DatabaseManager::GetInstance().UpdateOrderStatus((int)id, "Livree"))
+                {
+                    wxMessageBox("Livraison confirmee avec succes !\n\n"
+                                 "Code : " + code + "\n"
+                                 "Date : 19/01/2026 14:32\n\n"
+                                 "Le client recevra une notification.",
+                                 "Livraison reussie",
+                                 wxOK | wxICON_INFORMATION, this);
 
-                wxMessageBox("Livraison confirmee avec succes !\n\n"
-                             "Code : " + code + "\n"
-                             "Date : 19/01/2026 14:32\n\n"
-                             "Le client recevra une notification.",
-                             "Livraison reussie",
-                             wxOK | wxICON_INFORMATION,
-                             this);
-
-                m_livraisonsList->DeleteItem(selected);
+                    // ACTUALISER LA LISTE
+                    PopulateLivraisons();
+                }
+                else
+                {
+                    wxMessageBox("Erreur lors de la mise a jour.",
+                                 "Erreur", wxOK | wxICON_ERROR, this);
+                }
             }
         }
     }
 }
+
+
+
+
 
 void LivreurFrame::OnSignalerProbleme(wxCommandEvent& event)
 {

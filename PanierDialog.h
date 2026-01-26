@@ -1,3 +1,11 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
 #ifndef PANIERDIALOG_H
 #define PANIERDIALOG_H
 
@@ -28,4 +36,4 @@ private:
     wxDECLARE_EVENT_TABLE();
 };
 
-#endif // PANIERDIALOG_H
+#endif

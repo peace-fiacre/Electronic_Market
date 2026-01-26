@@ -1,24 +1,31 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
 #include "AdminProductsFrame.h"
+#include "AddProductDialog.h"
+#include "DatabaseManager.h"
 
 wxBEGIN_EVENT_TABLE(AdminProductsFrame, wxFrame)
     EVT_BUTTON(ID_ADD, AdminProductsFrame::OnAdd)
-    EVT_BUTTON(ID_EDIT, AdminProductsFrame::OnEdit)
     EVT_BUTTON(ID_DELETE, AdminProductsFrame::OnDelete)
-    EVT_LIST_ITEM_ACTIVATED(wxID_ANY, AdminProductsFrame::OnProductDoubleClick)
 wxEND_EVENT_TABLE()
 
 AdminProductsFrame::AdminProductsFrame(wxWindow* parent)
-    : wxFrame(parent, wxID_ANY, wxT("Administration - Gestion Produits"),
+    : wxFrame(parent, wxID_ANY, "Administration - Gestion Produits",
               wxDefaultPosition, wxSize(1200, 800))
 {
     wxPanel* panel = new wxPanel(this, wxID_ANY);
     panel->SetBackgroundColour(*wxWHITE);
 
-    // Menu Bar
     wxMenuBar* menuBar = new wxMenuBar;
     wxMenu* menuAccueil = new wxMenu;
-    wxMenuItem* itemAccueil = menuAccueil->Append(wxID_ANY, wxT("Retour menu principal"));
-    menuBar->Append(menuAccueil, wxT("Accueil"));
+    wxMenuItem* itemAccueil = menuAccueil->Append(wxID_ANY, "Retour menu principal");
+    menuBar->Append(menuAccueil, "Accueil");
     SetMenuBar(menuBar);
 
     Bind(wxEVT_MENU, [this](wxCommandEvent&) {
@@ -27,70 +34,65 @@ AdminProductsFrame::AdminProductsFrame(wxWindow* parent)
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Titre
-    wxStaticText* titleText = new wxStaticText(panel, wxID_ANY, wxT("GESTION DES PRODUITS"));
+    wxStaticText* titleText = new wxStaticText(panel, wxID_ANY, "GESTION DES PRODUITS");
     wxFont titleFont = titleText->GetFont();
     titleFont.SetPointSize(20);
     titleFont.SetWeight(wxFONTWEIGHT_BOLD);
     titleText->SetFont(titleFont);
     mainSizer->Add(titleText, 0, wxALL | wxCENTER, 20);
 
-    // Info
-    wxStaticText* infoText = new wxStaticText(panel, wxID_ANY,
-                                              wxT("Double-cliquez sur un produit pour le modifier"));
-    infoText->SetForegroundColour(wxColour(100, 100, 100));
-    mainSizer->Add(infoText, 0, wxALL | wxCENTER, 5);
+    m_productsGrid = new wxGrid(panel, wxID_ANY);
+    m_productsGrid->CreateGrid(50, 6);
 
-    // Liste des produits
-    m_productsList = new wxListCtrl(panel, wxID_ANY,
-                                    wxDefaultPosition, wxDefaultSize,
-                                    wxLC_REPORT | wxLC_SINGLE_SEL);
+    m_productsGrid->SetColLabelValue(0, "ID");
+    m_productsGrid->SetColLabelValue(1, "Nom");
+    m_productsGrid->SetColLabelValue(2, "Categorie");
+    m_productsGrid->SetColLabelValue(3, "Prix");
+    m_productsGrid->SetColLabelValue(4, "Stock");
+    m_productsGrid->SetColLabelValue(5, "Actif");
 
-    m_productsList->InsertColumn(0, wxT("ID"), wxLIST_FORMAT_CENTER, 50);
-    m_productsList->InsertColumn(1, wxT("Nom"), wxLIST_FORMAT_LEFT, 300);
-    m_productsList->InsertColumn(2, wxT("Catégorie"), wxLIST_FORMAT_LEFT, 150);
-    m_productsList->InsertColumn(3, wxT("Prix"), wxLIST_FORMAT_RIGHT, 120);
-    m_productsList->InsertColumn(4, wxT("Stock"), wxLIST_FORMAT_CENTER, 100);
-    m_productsList->InsertColumn(5, wxT("Statut"), wxLIST_FORMAT_CENTER, 100);
-    m_productsList->InsertColumn(6, wxT("Description"), wxLIST_FORMAT_LEFT, 250);
+    m_productsGrid->SetColSize(0, 50);
+    m_productsGrid->SetColSize(1, 400);
+    m_productsGrid->SetColSize(2, 150);
+    m_productsGrid->SetColSize(3, 120);
+    m_productsGrid->SetColSize(4, 100);
+    m_productsGrid->SetColSize(5, 100);
 
-    mainSizer->Add(m_productsList, 1, wxALL | wxEXPAND, 20);
+    m_productsGrid->EnableEditing(false);
 
-    // Boutons
+    PopulateProducts();
+
+    mainSizer->Add(m_productsGrid, 1, wxALL | wxEXPAND, 20);
+
     wxBoxSizer* btnSizer = new wxBoxSizer(wxHORIZONTAL);
 
-    wxButton* addBtn = new wxButton(panel, ID_ADD,
-                                    wxT("Ajouter Produit"),
+    wxButton* addBtn = new wxButton(panel, ID_ADD, "Ajouter Produit",
                                     wxDefaultPosition, wxSize(180, 45));
     addBtn->SetBackgroundColour(wxColour(40, 167, 69));
     addBtn->SetForegroundColour(*wxWHITE);
-    wxFont btnFont = addBtn->GetFont();
-    btnFont.SetWeight(wxFONTWEIGHT_BOLD);
-    addBtn->SetFont(btnFont);
     btnSizer->Add(addBtn, 0, wxRIGHT, 10);
 
-    wxButton* editBtn = new wxButton(panel, ID_EDIT,
-                                     wxT("Modifier Produit"),
-                                     wxDefaultPosition, wxSize(180, 45));
-    editBtn->SetBackgroundColour(wxColour(0, 123, 255));
-    editBtn->SetForegroundColour(*wxWHITE);
-    editBtn->SetFont(btnFont);
-    btnSizer->Add(editBtn, 0, wxRIGHT, 10);
-
-    wxButton* deleteBtn = new wxButton(panel, ID_DELETE,
-                                       wxT("Supprimer Produit"),
+    wxButton* deleteBtn = new wxButton(panel, ID_DELETE, "Supprimer Produit",
                                        wxDefaultPosition, wxSize(180, 45));
     deleteBtn->SetBackgroundColour(wxColour(220, 53, 69));
     deleteBtn->SetForegroundColour(*wxWHITE);
-    deleteBtn->SetFont(btnFont);
-    btnSizer->Add(deleteBtn, 0);
+    btnSizer->Add(deleteBtn, 0, wxRIGHT, 10);
+
+    wxButton* refreshBtn = new wxButton(panel, wxID_ANY, "Actualiser",
+                                        wxDefaultPosition, wxSize(150, 45));
+    refreshBtn->SetBackgroundColour(wxColour(0, 123, 255));
+    refreshBtn->SetForegroundColour(*wxWHITE);
+    btnSizer->Add(refreshBtn, 0);
+
+    refreshBtn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        PopulateProducts();
+        wxMessageBox("Liste actualisee !", "Actualisation",
+                     wxOK | wxICON_INFORMATION, this);
+    });
 
     mainSizer->Add(btnSizer, 0, wxALL | wxLEFT, 20);
 
     panel->SetSizer(mainSizer);
-
-    InitializeProducts();
-    RefreshProductsList();
 
     Maximize(true);
 }
@@ -99,187 +101,114 @@ AdminProductsFrame::~AdminProductsFrame()
 {
 }
 
-void AdminProductsFrame::InitializeProducts()
+void AdminProductsFrame::PopulateProducts()
 {
-    m_products.clear();
-
-    ProductData p1;
-    p1.name = wxT("Smartphone Samsung S23");
-    p1.category = wxT("Électronique");
-    p1.price = 450000;
-    p1.stock = 15;
-    p1.description = wxT("Smartphone haut de gamme avec écran AMOLED");
-    p1.active = true;
-    m_products.push_back(p1);
-
-    ProductData p2;
-    p2.name = wxT("MacBook Pro 14");
-    p2.category = wxT("Électronique");
-    p2.price = 1200000;
-    p2.stock = 8;
-    p2.description = wxT("Ordinateur portable Apple M2");
-    p2.active = true;
-    m_products.push_back(p2);
-
-    ProductData p3;
-    p3.name = wxT("Écouteurs Sony WH-1000XM5");
-    p3.category = wxT("Électronique");
-    p3.price = 35000;
-    p3.stock = 45;
-    p3.description = wxT("Casque à réduction de bruit active");
-    p3.active = true;
-    m_products.push_back(p3);
-
-    ProductData p4;
-    p4.name = wxT("T-shirt Nike");
-    p4.category = wxT("Vêtements");
-    p4.price = 15000;
-    p4.stock = 100;
-    p4.description = wxT("T-shirt en coton confortable");
-    p4.active = true;
-    m_products.push_back(p4);
-
-    ProductData p5;
-    p5.name = wxT("Jean Levi's 501");
-    p5.category = wxT("Vêtements");
-    p5.price = 25000;
-    p5.stock = 60;
-    p5.description = wxT("Jean classique coupe droite");
-    p5.active = true;
-    m_products.push_back(p5);
-}
-
-void AdminProductsFrame::RefreshProductsList()
-{
-    m_productsList->DeleteAllItems();
-
-    for(size_t i = 0; i < m_products.size(); i++)
+    // Vider la grille
+    for(int i = 0; i < m_productsGrid->GetNumberRows(); i++)
     {
-        const ProductData& product = m_products[i];
+        for(int j = 0; j < m_productsGrid->GetNumberCols(); j++)
+        {
+            m_productsGrid->SetCellValue(i, j, "");
+        }
+    }
 
-        long index = m_productsList->InsertItem(i, wxString::Format(wxT("%d"), (int)(i + 1)));
-        m_productsList->SetItem(index, 1, product.name);
-        m_productsList->SetItem(index, 2, product.category);
-        m_productsList->SetItem(index, 3, wxString::Format(wxT("%d F"), product.price));
-        m_productsList->SetItem(index, 4, wxString::Format(wxT("%d"), product.stock));
-        m_productsList->SetItem(index, 5, product.active ? wxT("Actif") : wxT("Inactif"));
-        m_productsList->SetItem(index, 6, product.description);
+    // Charger depuis la base de données
+    std::vector<Product> products = DatabaseManager::GetInstance().GetAllProducts();
 
-        if(product.active)
-            m_productsList->SetItemTextColour(index, wxColour(0, 128, 0));
-        else
-            m_productsList->SetItemTextColour(index, wxColour(150, 150, 150));
+    int row = 0;
+    for(const auto& p : products)
+    {
+        if(row >= m_productsGrid->GetNumberRows())
+            break;
 
-        if(product.stock < 10)
-            m_productsList->SetItemBackgroundColour(index, wxColour(255, 240, 240));
+        m_productsGrid->SetCellValue(row, 0, wxString::Format("%d", p.id));
+        m_productsGrid->SetCellValue(row, 1, p.nom);
+        m_productsGrid->SetCellValue(row, 2, p.categorie);
+        m_productsGrid->SetCellValue(row, 3, wxString::Format("%.0f F", p.prix));
+        m_productsGrid->SetCellValue(row, 4, wxString::Format("%d", p.stock));
+        m_productsGrid->SetCellValue(row, 5, p.actif ? "Oui" : "Non");
+
+        row++;
     }
 }
 
 void AdminProductsFrame::OnAdd(wxCommandEvent& event)
 {
-    AddProductDialog dialog(this, wxT("Ajouter un produit"));
+    AddProductDialog* dlg = new AddProductDialog(this);
 
-    if(dialog.ShowModal() == wxID_OK)
+    if(dlg->ShowModal() == wxID_OK)
     {
-        ProductData newProduct = dialog.GetProductData();
-        m_products.push_back(newProduct);
-        RefreshProductsList();
+        wxString nom = dlg->GetProductName();
+        wxString categorie = dlg->GetCategory();
+        wxString description = dlg->GetDescription();
+        wxString prixStr = dlg->GetPrice();
+        wxString stockStr = dlg->GetStock();
 
-        wxMessageBox(wxT("Produit ajouté avec succès !\n\nNom : ") + newProduct.name,
-                     wxT("Succès"),
-                     wxOK | wxICON_INFORMATION,
-                     this);
-    }
-}
+        double prix = 0.0;
+        long stock = 0;
+        prixStr.ToDouble(&prix);
+        stockStr.ToLong(&stock);
 
-void AdminProductsFrame::OnEdit(wxCommandEvent& event)
-{
-    long selected = m_productsList->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-
-    if(selected == -1)
-    {
-        wxMessageBox(wxT("Veuillez sélectionner un produit à modifier.\n\n"
-                       "Astuce : Cliquez sur une ligne ou double-cliquez pour modifier."),
-                     wxT("Aucune sélection"),
-                     wxOK | wxICON_WARNING,
-                     this);
-        return;
-    }
-
-    if(selected >= 0 && selected < (long)m_products.size())
-    {
-        AddProductDialog dialog(this, wxT("Modifier le produit"));
-        dialog.SetProductData(m_products[selected]);
-
-        if(dialog.ShowModal() == wxID_OK)
+        if(DatabaseManager::GetInstance().AddProduct(nom, description, categorie, prix, (int)stock))
         {
-            m_products[selected] = dialog.GetProductData();
-            RefreshProductsList();
+            wxMessageBox("Produit ajoute avec succes dans la base de donnees !\n\n"
+                         "Nom : " + nom + "\n"
+                         "Categorie : " + categorie + "\n"
+                         "Prix : " + prixStr + " F\n"
+                         "Stock : " + stockStr,
+                         "Succes", wxOK | wxICON_INFORMATION, this);
 
-            wxMessageBox(wxT("Produit modifié avec succès !"),
-                         wxT("Succès"),
-                         wxOK | wxICON_INFORMATION,
-                         this);
+            PopulateProducts();
+        }
+        else
+        {
+            wxMessageBox("Erreur lors de l'ajout du produit en base de donnees.",
+                         "Erreur", wxOK | wxICON_ERROR, this);
         }
     }
+
+    dlg->Destroy();
 }
 
 void AdminProductsFrame::OnDelete(wxCommandEvent& event)
 {
-    long selected = m_productsList->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    int row = m_productsGrid->GetGridCursorRow();
 
-    if(selected == -1)
+    if(row < 0)
     {
-        wxMessageBox(wxT("Veuillez sélectionner un produit à supprimer."),
-                     wxT("Aucune sélection"),
-                     wxOK | wxICON_WARNING,
-                     this);
+        wxMessageBox("Veuillez selectionner une ligne a supprimer.",
+                     "Aucune selection", wxOK | wxICON_WARNING, this);
         return;
     }
 
-    if(selected >= 0 && selected < (long)m_products.size())
+    wxString idStr = m_productsGrid->GetCellValue(row, 0);
+    wxString productName = m_productsGrid->GetCellValue(row, 1);
+
+    if(idStr.IsEmpty() || productName.IsEmpty())
     {
-        wxString productName = m_products[selected].name;
-
-        int response = wxMessageBox(
-            wxT("Supprimer définitivement le produit :\n\n") + productName + wxT(" ?\n\n")
-            + wxT("Cette action est irréversible !"),
-            wxT("Confirmation"),
-            wxYES_NO | wxICON_QUESTION,
-            this
-        );
-
-        if(response == wxYES)
-        {
-            m_products.erase(m_products.begin() + selected);
-            RefreshProductsList();
-
-            wxMessageBox(wxT("Produit supprimé avec succès !"),
-                         wxT("Suppression"),
-                         wxOK | wxICON_INFORMATION,
-                         this);
-        }
+        wxMessageBox("Cette ligne est vide.", "Erreur", wxOK | wxICON_WARNING, this);
+        return;
     }
-}
 
-void AdminProductsFrame::OnProductDoubleClick(wxListEvent& event)
-{
-    long selected = event.GetIndex();
+    long id;
+    idStr.ToLong(&id);
 
-    if(selected >= 0 && selected < (long)m_products.size())
+    int response = wxMessageBox("Supprimer le produit :\n\n" + productName + " ?",
+                                "Confirmation", wxYES_NO | wxICON_QUESTION, this);
+
+    if(response == wxYES)
     {
-        AddProductDialog dialog(this, wxT("Modifier le produit"));
-        dialog.SetProductData(m_products[selected]);
-
-        if(dialog.ShowModal() == wxID_OK)
+        if(DatabaseManager::GetInstance().DeleteProduct((int)id))
         {
-            m_products[selected] = dialog.GetProductData();
-            RefreshProductsList();
+            wxMessageBox("Produit supprime avec succes de la base de donnees !",
+                         "Suppression", wxOK | wxICON_INFORMATION, this);
 
-            wxMessageBox(wxT("Produit modifié avec succès !"),
-                         wxT("Succès"),
-                         wxOK | wxICON_INFORMATION,
-                         this);
+            PopulateProducts();
+        }
+        else
+        {
+            wxMessageBox("Erreur lors de la suppression.",
+                         "Erreur", wxOK | wxICON_ERROR, this);
         }
     }
 }

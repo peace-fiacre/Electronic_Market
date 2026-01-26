@@ -1,3 +1,13 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
+
+
 #ifndef ADMINPRODUCTSFRAME_H
 #define ADMINPRODUCTSFRAME_H
 
@@ -26,4 +36,4 @@ private:
     wxDECLARE_EVENT_TABLE();
 };
 
-#endif // ADMINPRODUCTSFRAME_H
+#endif

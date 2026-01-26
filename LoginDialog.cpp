@@ -1,3 +1,13 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
+
+
 #include "LoginDialog.h"
 
 wxBEGIN_EVENT_TABLE(LoginDialog, wxDialog)
@@ -7,7 +17,7 @@ wxEND_EVENT_TABLE()
 
 LoginDialog::LoginDialog(wxWindow* parent)
     : wxDialog(parent, wxID_ANY, "Connexion - Plateforme E-Commerce",
-               wxDefaultPosition, wxSize(550, 500))
+               wxDefaultPosition, wxSize(600, 700))
 {
     wxPanel* panel = new wxPanel(this);
     panel->SetBackgroundColour(wxColour(245, 245, 250));

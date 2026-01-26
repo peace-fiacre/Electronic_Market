@@ -1,5 +1,15 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
+
 #include "CatalogueFrame.h"
 #include "PanierDialog.h"
+#include "DatabaseManager.h"
 
 wxBEGIN_EVENT_TABLE(CatalogueFrame, wxFrame)
     EVT_BUTTON(ID_SEARCH, CatalogueFrame::OnSearch)
@@ -32,12 +42,12 @@ CatalogueFrame::CatalogueFrame(wxWindow* parent)
                                wxSize(120, 35));
 
     wxStaticText* catLabel = new wxStaticText(m_panel, wxID_ANY,
-                                              "Catégorie :",
+                                              "Categorie :",
                                               wxPoint(680, 25));
     wxArrayString categories;
     categories.Add("Toutes");
-    categories.Add("Électronique");
-    categories.Add("Vêtements");
+    categories.Add("Electronique");
+    categories.Add("Vetements");
     categories.Add("Alimentation");
     categories.Add("Maison");
     categories.Add("Sports");
@@ -62,15 +72,15 @@ CatalogueFrame::CatalogueFrame(wxWindow* parent)
 
     m_productList->InsertColumn(0, "ID", wxLIST_FORMAT_CENTER, 50);
     m_productList->InsertColumn(1, "Produit", wxLIST_FORMAT_LEFT, 400);
-    m_productList->InsertColumn(2, "Catégorie", wxLIST_FORMAT_LEFT, 150);
+    m_productList->InsertColumn(2, "Categorie", wxLIST_FORMAT_LEFT, 150);
     m_productList->InsertColumn(3, "Prix", wxLIST_FORMAT_RIGHT, 120);
     m_productList->InsertColumn(4, "Stock", wxLIST_FORMAT_CENTER, 100);
-    m_productList->InsertColumn(5, "Disponibilité", wxLIST_FORMAT_CENTER, 150);
+    m_productList->InsertColumn(5, "Disponibilite", wxLIST_FORMAT_CENTER, 150);
 
     PopulateProducts();
 
     m_statusBar = CreateStatusBar();
-    m_statusBar->SetStatusText("24 produits affichés");
+    m_statusBar->SetStatusText("Chargement des produits...");
 
     Maximize(true);
 }
@@ -107,7 +117,7 @@ void CatalogueFrame::CreateMenuBar()
     }, itemAccueil->GetId());
 
     Bind(wxEVT_MENU, [this](wxCommandEvent&) {
-        wxMessageBox("Gestion du profil utilisateur à implémenter",
+        wxMessageBox("Gestion du profil utilisateur a implementer",
                      "Mon profil",
                      wxOK | wxICON_INFORMATION,
                      this);
@@ -120,25 +130,67 @@ void CatalogueFrame::CreateMenuBar()
     }, itemVoirPanier->GetId());
 
     Bind(wxEVT_MENU, [this](wxCommandEvent&) {
-        wxTextEntryDialog reclamDialog(
+        wxTextEntryDialog commandeDlg(
             this,
-            "Décrivez votre réclamation :",
-            "Faire une réclamation",
-            "",
-            wxOK | wxCANCEL | wxTE_MULTILINE
+            "Entrez le numero de votre commande :",
+            "Numero de commande",
+            ""
         );
 
-        if(reclamDialog.ShowModal() == wxID_OK)
+        if(commandeDlg.ShowModal() == wxID_OK)
         {
-            wxString reclamation = reclamDialog.GetValue();
-            if(!reclamation.IsEmpty())
+            wxString numCmd = commandeDlg.GetValue();
+            long id_commande;
+
+            if(!numCmd.ToLong(&id_commande))
             {
-                wxMessageBox("Réclamation enregistrée avec succès !\n\n"
-                           "Numéro de réclamation : REC-" + wxString::Format("%03d", wxGetLocalTime() % 1000) + "\n\n"
-                           "Notre service client vous contactera sous 24-48h.",
-                           "Réclamation envoyée",
-                           wxOK | wxICON_INFORMATION,
-                           this);
+                wxMessageBox("Numero de commande invalide.",
+                             "Erreur",
+                             wxOK | wxICON_ERROR,
+                             this);
+                return;
+            }
+
+            wxTextEntryDialog reclamDialog(
+                this,
+                "Decrivez votre reclamation :",
+                "Faire une reclamation - CMD-" + numCmd,
+                "",
+                wxOK | wxCANCEL | wxTE_MULTILINE
+            );
+
+            if(reclamDialog.ShowModal() == wxID_OK)
+            {
+                wxString reclamation = reclamDialog.GetValue();
+
+                if(!reclamation.IsEmpty())
+                {
+                    // ENREGISTRER EN BASE DE DONNÉES
+                    int id_reclam = DatabaseManager::GetInstance().CreateReclamation(
+                        (int)id_commande,
+                        "Client Connecte",
+                        "Reclamation generale",
+                        reclamation
+                    );
+
+                    if(id_reclam > 0)
+                    {
+                        wxMessageBox("Reclamation enregistree avec succes !\n\n"
+                                   "Numero de reclamation : REC-" + wxString::Format("%d", id_reclam) + "\n\n"
+                                   "Votre reclamation a ete enregistree en base de donnees.\n"
+                                   "Notre service client vous contactera sous 24-48h.",
+                                   "Reclamation envoyee",
+                                   wxOK | wxICON_INFORMATION,
+                                   this);
+                    }
+                    else
+                    {
+                        wxMessageBox("Erreur lors de l'enregistrement de la reclamation.",
+                                     "Erreur",
+                                     wxOK | wxICON_ERROR,
+                                     this);
+                    }
+                }
             }
         }
     }, itemReclamation->GetId());
@@ -146,7 +198,7 @@ void CatalogueFrame::CreateMenuBar()
     Bind(wxEVT_MENU, [this](wxCommandEvent&) {
         wxTextEntryDialog commandeDialog(
             this,
-            "Entrez votre numéro de commande :",
+            "Entrez votre numero de commande :",
             "Suivre ma commande",
             ""
         );
@@ -159,7 +211,7 @@ void CatalogueFrame::CreateMenuBar()
                 wxMessageBox("Suivi de commande : " + numCommande + "\n\n"
                            "Statut : En cours de livraison\n"
                            "N° de suivi : TRK-2026-123\n"
-                           "Livraison prévue : 20/01/2026\n"
+                           "Livraison prevue : 20/01/2026\n"
                            "Transporteur : DHL Express",
                            "Statut de la commande",
                            wxOK | wxICON_INFORMATION,
@@ -169,43 +221,51 @@ void CatalogueFrame::CreateMenuBar()
     }, itemSuiviCommande->GetId());
 }
 
+
 void CatalogueFrame::PopulateProducts()
 {
-    struct Product {
-        const char* name;
-        const char* category;
-        const char* price;
-        const char* stock;
-        const char* availability;
-    };
+    m_productList->DeleteAllItems();
 
-    Product products[] = {
-        {"Smartphone Samsung S23", "Électronique", "450000", "15", "En stock"},
-        {"MacBook Pro 14", "Électronique", "1200000", "8", "En stock"},
-        {"Écouteurs Sony", "Électronique", "35000", "45", "En stock"},
-        {"T-shirt Nike", "Vêtements", "15000", "100", "En stock"},
-        {"Jean Levi's", "Vêtements", "25000", "60", "En stock"},
-        {"Chaussures Adidas", "Vêtements", "45000", "30", "En stock"},
-        {"Riz 25kg", "Alimentation", "18000", "200", "En stock"},
-        {"Huile 5L", "Alimentation", "8000", "150", "En stock"},
-        {"Pack eau 12x1.5L", "Alimentation", "3500", "300", "En stock"},
-        {"Canapé 3 places", "Maison", "185000", "12", "En stock"}
-    };
-
-    for(int i = 0; i < 10; i++)
+    try
     {
-        long index = m_productList->InsertItem(i, wxString::Format("%d", i + 1));
-        m_productList->SetItem(index, 1, products[i].name);
-        m_productList->SetItem(index, 2, products[i].category);
-        wxString priceStr;
-        priceStr << products[i].price << " F";
-        m_productList->SetItem(index, 3, priceStr);
-        m_productList->SetItem(index, 4, products[i].stock);
-        m_productList->SetItem(index, 5, products[i].availability);
+        // CHARGER DEPUIS LA BASE DE DONNÉES
+        m_products = DatabaseManager::GetInstance().GetAllProducts();
 
-        m_productList->SetItemTextColour(index, wxColour(0, 128, 0));
+        wxLogMessage("Chargement de %zu produits", m_products.size());
+
+        for(size_t i = 0; i < m_products.size(); i++)
+        {
+            const Product& p = m_products[i];
+
+            long index = m_productList->InsertItem(i, wxString::Format("%d", p.id));
+            m_productList->SetItem(index, 1, p.nom);
+            m_productList->SetItem(index, 2, p.categorie);
+            m_productList->SetItem(index, 3, wxString::Format("%.0f F", p.prix));
+            m_productList->SetItem(index, 4, wxString::Format("%d", p.stock));
+            m_productList->SetItem(index, 5, p.stock > 0 ? "En stock" : "Rupture");
+
+            if(p.stock > 0)
+                m_productList->SetItemTextColour(index, wxColour(0, 128, 0));
+            else
+                m_productList->SetItemTextColour(index, wxColour(200, 0, 0));
+        }
+
+        m_statusBar->SetStatusText(wxString::Format("%zu produits affiches", m_products.size()));
+    }
+    catch(const std::exception& e)
+    {
+        wxLogError("Erreur lors du chargement des produits: %s", e.what());
+        m_statusBar->SetStatusText("Erreur de chargement");
+
+        wxMessageBox("Erreur lors du chargement des produits depuis la base de donnees.",
+                     "Erreur",
+                     wxOK | wxICON_ERROR,
+                     this);
     }
 }
+
+
+
 
 void CatalogueFrame::OnSearch(wxCommandEvent& event)
 {
@@ -222,13 +282,13 @@ void CatalogueFrame::OnSearch(wxCommandEvent& event)
 
     wxString message;
     message << "Recherche de : \"" << searchText << "\"\n\n"
-            << "Fonctionnalité de recherche active !\n"
-            << "Les résultats s'afficheraient ici.";
+            << "Fonctionnalite de recherche active !\n"
+            << "Les resultats s'afficheraient ici.";
 
     m_statusBar->SetStatusText("Recherche : " + searchText);
 
     wxMessageBox(message,
-                 "Résultats de recherche",
+                 "Resultats de recherche",
                  wxOK | wxICON_INFORMATION,
                  this);
 }
@@ -243,33 +303,71 @@ void CatalogueFrame::OnViewCart(wxCommandEvent& event)
 void CatalogueFrame::OnProductDoubleClick(wxListEvent& event)
 {
     long index = event.GetIndex();
-    wxString productName = m_productList->GetItemText(index, 1);
-    wxString productPrice = m_productList->GetItemText(index, 3);
-    wxString productStock = m_productList->GetItemText(index, 4);
+
+    if(index < 0 || index >= (long)m_products.size())
+        return;
+
+    const Product& product = m_products[index];
 
     wxString details;
-    details << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            << "DÉTAILS DU PRODUIT\n"
-            << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            << "Nom : " << productName << "\n"
-            << "Prix : " << productPrice << "\n"
-            << "Stock disponible : " << productStock << " unités\n\n"
-            << "Description : Produit de haute qualité\n"
-            << "Garantie : 1 an\n"
-            << "Livraison : 24-48h\n\n"
-            << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+    details << "================================\n"
+            << "DETAILS DU PRODUIT\n"
+            << "================================\n\n"
+            << "Nom : " << product.nom << "\n"
+            << "Categorie : " << product.categorie << "\n"
+            << "Prix : " << wxString::Format("%.0f F", product.prix) << "\n"
+            << "Stock disponible : " << product.stock << " unites\n\n"
+            << "Description :\n" << product.description << "\n\n"
+            << "================================";
 
-    int response = wxMessageBox(details + "\n\nAjouter au panier ?",
-                                "Détails - " + productName,
-                                wxYES_NO | wxICON_QUESTION,
-                                this);
-
-    if(response == wxYES)
+    if(product.stock <= 0)
     {
-        m_cartItemCount++;
+        wxMessageBox(details + "\n\nProduit en rupture de stock.",
+                     "Details - " + product.nom,
+                     wxOK | wxICON_WARNING,
+                     this);
+        return;
+    }
+
+    wxTextEntryDialog quantityDlg(
+        this,
+        details + "\n\nQuantite a ajouter au panier :",
+        "Ajouter au panier - " + product.nom,
+        "1"
+    );
+
+    if(quantityDlg.ShowModal() == wxID_OK)
+    {
+        wxString qtyStr = quantityDlg.GetValue();
+        long quantity;
+
+        if(!qtyStr.ToLong(&quantity) || quantity <= 0)
+        {
+            wxMessageBox("Quantite invalide.",
+                         "Erreur",
+                         wxOK | wxICON_ERROR,
+                         this);
+            return;
+        }
+
+        if(quantity > product.stock)
+        {
+            wxMessageBox(wxString::Format("Stock insuffisant !\n\nStock disponible : %d", product.stock),
+                         "Stock insuffisant",
+                         wxOK | wxICON_WARNING,
+                         this);
+            return;
+        }
+
+        m_cartItemCount += quantity;
         m_viewCartBtn->SetLabel(wxString::Format("Panier (%d)", m_cartItemCount));
 
-        wxMessageBox("Produit ajouté au panier avec succès !",
+        wxMessageBox(wxString::Format("Produit ajoute au panier !\n\n"
+                                      "Produit : %s\n"
+                                      "Quantite : %ld\n"
+                                      "Prix unitaire : %.0f F\n"
+                                      "Sous-total : %.0f F",
+                                      product.nom, quantity, product.prix, product.prix * quantity),
                      "Ajout au panier",
                      wxOK | wxICON_INFORMATION,
                      this);

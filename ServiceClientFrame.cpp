@@ -1,3 +1,13 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
+
+#include "DatabaseManager.h"
 #include "ServiceClientFrame.h"
 
 wxBEGIN_EVENT_TABLE(ServiceClientFrame, wxFrame)
@@ -157,47 +167,38 @@ void ServiceClientFrame::CreateRetoursPage()
     rembourserBtn->SetBackgroundColour(wxColour(255, 193, 7));
 }
 
+
+
 void ServiceClientFrame::PopulateReclamations()
 {
-    struct Reclamation {
-        const char* commande;
-        const char* client;
-        const char* type;
-        const char* description;
-        const char* date;
-        const char* statut;
-    };
+    m_reclamationsList->DeleteAllItems();
 
-    Reclamation reclamations[] = {
-        {"CMD-2026-045", "AHOUANSOU Olivier", "Produit defectueux",
-         "Smartphone ne s'allume plus apres 2 jours", "15/01/2026", "Nouveau"},
-        {"CMD-2026-038", "HOUNGUEVOU Blandine", "Livraison retard",
-         "Commande passee il y a 5 jours, toujours pas recue", "14/01/2026", "En cours"},
-        {"CMD-2026-042", "EGOUDJOBI Peace", "Mauvais article",
-         "Couleur differente de la photo", "16/01/2026", "Nouveau"},
-        {"CMD-2026-031", "Client Test", "Service client",
-         "Demande d'information sur garantie", "13/01/2026", "Traite"}
-    };
+    // CHARGER DEPUIS LA BASE DE DONNÉES
+    std::vector<Reclamation> reclamations = DatabaseManager::GetInstance().GetAllReclamations();
 
-    for(int i = 0; i < 4; i++)
+    for(size_t i = 0; i < reclamations.size(); i++)
     {
-        long index = m_reclamationsList->InsertItem(i, wxString::Format("%d", i + 1));
-        m_reclamationsList->SetItem(index, 1, reclamations[i].commande);
-        m_reclamationsList->SetItem(index, 2, reclamations[i].client);
-        m_reclamationsList->SetItem(index, 3, reclamations[i].type);
-        m_reclamationsList->SetItem(index, 4, reclamations[i].description);
-        m_reclamationsList->SetItem(index, 5, reclamations[i].date);
-        m_reclamationsList->SetItem(index, 6, reclamations[i].statut);
+        const Reclamation& r = reclamations[i];
 
-        wxString statutStr(reclamations[i].statut);
-        if(statutStr == "Nouveau")
+        long index = m_reclamationsList->InsertItem(i, wxString::Format("%d", r.id));
+        m_reclamationsList->SetItem(index, 1, "CMD-" + wxString::Format("%d", r.id_commande));
+        m_reclamationsList->SetItem(index, 2, r.client);
+        m_reclamationsList->SetItem(index, 3, r.type);
+        m_reclamationsList->SetItem(index, 4, r.description);
+        m_reclamationsList->SetItem(index, 5, r.date);
+        m_reclamationsList->SetItem(index, 6, r.statut);
+
+        if(r.statut == "Nouveau")
             m_reclamationsList->SetItemTextColour(index, wxColour(220, 53, 69));
-        else if(statutStr == "En cours")
+        else if(r.statut == "En cours")
             m_reclamationsList->SetItemTextColour(index, wxColour(255, 193, 7));
         else
             m_reclamationsList->SetItemTextColour(index, wxColour(40, 167, 69));
     }
 }
+
+
+
 
 void ServiceClientFrame::PopulateRetours()
 {

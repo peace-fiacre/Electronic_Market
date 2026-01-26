@@ -1,8 +1,18 @@
+/***************************************************************
+ * Name:      ElectronicMarketApp.cpp
+ * Purpose:   Code for Application Class
+ * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
+ * Created:   2026-01-16
+ **************************************************************/
+
+
 #ifndef CATALOGUEFRAME_H
 #define CATALOGUEFRAME_H
 
 #include <wx/wx.h>
 #include <wx/listctrl.h>
+#include <vector>              // ← AJOUTER
+#include "DatabaseManager.h"   // ← AJOUTER
 
 class CatalogueFrame : public wxFrame
 {
@@ -21,6 +31,7 @@ private:
     wxStatusBar* m_statusBar;
 
     int m_cartItemCount;
+    std::vector<Product> m_products;  // ← MAINTENANT ÇA VA MARCHER
 
     void CreateMenuBar();
     void PopulateProducts();
