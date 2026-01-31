@@ -12,62 +12,45 @@
 
 IMPLEMENT_APP(ElectronicMarketApp);
 
-
 bool ElectronicMarketApp::OnInit()
 {
-    // INITIALISER LA BASE DE DONNÉES
+    bool wxsOK = true;
+    wxInitAllImageHandlers();
+
+    // Initialiser DatabaseManager
     DatabaseManager& db = DatabaseManager::GetInstance();
 
-    if(!db.Initialize())
-    {
-        wxMessageBox("Erreur d'initialisation de la base de donnees !\n\n"
-                     "L'application ne peut pas demarrer.",
-                     "Erreur critique",
-                     wxOK | wxICON_ERROR);
+    if (!db.Initialize()) {
+        wxMessageBox("Erreur lors de l'ouverture de la base de données.\n\n"
+                    "Vérifiez que SQLite3 est correctement configuré.",
+                    "Erreur Critique", wxICON_ERROR);
         return false;
     }
 
-    wxLogMessage("Base de donnees initialisee avec succes");
+    // Charger les données de démo
+    db.InitializeSampleData();
 
-    // AJOUTER DES DONNÉES DE DÉMONSTRATION SI LA DB EST VIDE
-    if(!db.InitializeSampleData())
+    // Afficher le login
+    LoginDialog loginDlg(NULL);
+    if(loginDlg.ShowModal() == wxID_OK)
     {
-        wxLogWarning("Impossible d'initialiser les donnees de demonstration");
+        if(wxsOK)
+        {
+            ElectronicMarketFrame* Frame = new ElectronicMarketFrame(0);
+            Frame->Show();
+            SetTopWindow(Frame);
+        }
     }
     else
     {
-        wxLogMessage("Donnees de demonstration chargees");
+        return false;
     }
 
-    // Créer et afficher la fenêtre de connexion
-    LoginDialog* loginDlg = new LoginDialog(NULL);
+    return wxsOK;
+}
 
-    if(loginDlg->ShowModal() == wxID_OK)
-    {
-        wxString userType = loginDlg->GetUserType();
-        wxString username = loginDlg->GetUsername();
-
-        loginDlg->Destroy();
-
-        ElectronicMarketFrame* frame = new ElectronicMarketFrame(0L);
-
-        if(userType == "ADMIN")
-        {
-            frame->SetTitle("Plateforme E-Commerce - Mode Administrateur (" + username + ")");
-        }
-        else
-        {
-            frame->SetTitle("Plateforme E-Commerce - Bienvenue " + username);
-        }
-
-        frame->Maximize(true);
-        frame->Show();
-
-        return true;
-    }
-
-    loginDlg->Destroy();
-    db.Close();
-
-    return false;
+int ElectronicMarketApp::OnExit()
+{
+    DatabaseManager::GetInstance().Close();
+    return 0;
 }

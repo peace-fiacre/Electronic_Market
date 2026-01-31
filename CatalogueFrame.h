@@ -1,18 +1,16 @@
 /***************************************************************
- * Name:      ElectronicMarketApp.cpp
- * Purpose:   Code for Application Class
+ * Name:      CatalogueFrame.h
+ * Purpose:   Catalogue avec affichage en cartes modernes
  * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
- * Created:   2026-01-16
+ * Created:   2026-01-31
  **************************************************************/
-
 
 #ifndef CATALOGUEFRAME_H
 #define CATALOGUEFRAME_H
 
 #include <wx/wx.h>
-#include <wx/listctrl.h>
-#include <vector>              // ← AJOUTER
-#include "DatabaseManager.h"   // ← AJOUTER
+#include <wx/scrolwin.h>
+#include "DatabaseManager.h"
 
 class CatalogueFrame : public wxFrame
 {
@@ -21,32 +19,28 @@ public:
     virtual ~CatalogueFrame();
 
 private:
-    wxPanel* m_panel;
-    wxMenuBar* m_menuBar;
-    wxTextCtrl* m_searchCtrl;
-    wxButton* m_searchBtn;
-    wxChoice* m_categoryChoice;
-    wxListCtrl* m_productList;
-    wxButton* m_viewCartBtn;
-    wxStatusBar* m_statusBar;
+    wxScrolledWindow* m_scrolledWindow;
+    wxPanel* m_cardsPanel;
+    wxStaticText* m_cartBadge;
+    wxStaticText* m_statusText;
 
-    int m_cartItemCount;
-    std::vector<Product> m_products;  // ← MAINTENANT ÇA VA MARCHER
+    void LoadProductCards();
+    void UpdateCartBadge();
 
-    void CreateMenuBar();
-    void PopulateProducts();
+    wxPanel* CreateProductCard(wxWindow* parent, const Product& product);
 
-    void OnSearch(wxCommandEvent& event);
-    void OnViewCart(wxCommandEvent& event);
-    void OnProductDoubleClick(wxListEvent& event);
+    void OnBack(wxCommandEvent& event);
+    void OnCart(wxCommandEvent& event);
+    void OnAddToCart(wxCommandEvent& event);
 
     enum
     {
-        ID_SEARCH = wxID_HIGHEST + 1,
-        ID_VIEW_CART
+        ID_BACK = wxID_HIGHEST + 1,
+        ID_CART,
+        ID_ADD_TO_CART_BASE = 10000  // Base pour les IDs dynamiques
     };
 
     wxDECLARE_EVENT_TABLE();
 };
 
-#endif // CATALOGUEFRAME_H
+#endif

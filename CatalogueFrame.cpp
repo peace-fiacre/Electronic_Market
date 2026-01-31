@@ -1,375 +1,347 @@
 /***************************************************************
- * Name:      ElectronicMarketApp.cpp
- * Purpose:   Code for Application Class
+ * Name:      CatalogueFrame.cpp
+ * Purpose:   Catalogue avec affichage en cartes modernes
  * Author:    EGOUDJOBI Peace, HOUNGUEVOU Blandine, AHOUANSOU Olivier
- * Created:   2026-01-16
+ * Created:   2026-01-31
  **************************************************************/
-
-
 
 #include "CatalogueFrame.h"
 #include "PanierDialog.h"
 #include "DatabaseManager.h"
+#include "CartManager.h"
 
 wxBEGIN_EVENT_TABLE(CatalogueFrame, wxFrame)
-    EVT_BUTTON(ID_SEARCH, CatalogueFrame::OnSearch)
-    EVT_BUTTON(ID_VIEW_CART, CatalogueFrame::OnViewCart)
-    EVT_LIST_ITEM_ACTIVATED(wxID_ANY, CatalogueFrame::OnProductDoubleClick)
+    EVT_BUTTON(ID_BACK, CatalogueFrame::OnBack)
+    EVT_BUTTON(ID_CART, CatalogueFrame::OnCart)
 wxEND_EVENT_TABLE()
 
 CatalogueFrame::CatalogueFrame(wxWindow* parent)
     : wxFrame(parent, wxID_ANY, "Catalogue Produits",
-              wxDefaultPosition, wxSize(1200, 800)),
-      m_cartItemCount(0)
+              wxDefaultPosition, wxSize(1400, 900))
 {
-    m_panel = new wxPanel(this, wxID_ANY);
-    m_panel->SetBackgroundColour(*wxWHITE);
+    wxPanel* mainPanel = new wxPanel(this);
+    mainPanel->SetBackgroundColour(wxColour(245, 245, 250));
 
-    CreateMenuBar();
+    wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    wxStaticText* searchLabel = new wxStaticText(m_panel, wxID_ANY,
-                                                  "Rechercher :",
-                                                  wxPoint(30, 25));
-    m_searchCtrl = new wxTextCtrl(m_panel, wxID_ANY,
-                                  "",
-                                  wxPoint(120, 20),
-                                  wxSize(400, 35));
-    m_searchCtrl->SetHint("Nom du produit...");
+    // HEADER
+    wxPanel* headerPanel = new wxPanel(mainPanel);
+    headerPanel->SetBackgroundColour(*wxWHITE);
+    wxBoxSizer* headerSizer = new wxBoxSizer(wxHORIZONTAL);
 
-    m_searchBtn = new wxButton(m_panel, ID_SEARCH,
-                               "Rechercher",
-                               wxPoint(530, 20),
-                               wxSize(120, 35));
+    wxStaticText* titleText = new wxStaticText(headerPanel, wxID_ANY, "CATALOGUE PRODUITS");
+    wxFont titleFont = titleText->GetFont();
+    titleFont.SetPointSize(20);
+    titleFont.SetWeight(wxFONTWEIGHT_BOLD);
+    titleText->SetFont(titleFont);
+    titleText->SetForegroundColour(wxColour(0, 102, 204));
+    headerSizer->Add(titleText, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, 30);
 
-    wxStaticText* catLabel = new wxStaticText(m_panel, wxID_ANY,
-                                              "Categorie :",
-                                              wxPoint(680, 25));
-    wxArrayString categories;
-    categories.Add("Toutes");
-    categories.Add("Electronique");
-    categories.Add("Vetements");
-    categories.Add("Alimentation");
-    categories.Add("Maison");
-    categories.Add("Sports");
+    // Badge panier
+    m_cartBadge = new wxStaticText(headerPanel, wxID_ANY, "0",
+                                   wxDefaultPosition, wxSize(30, 30));
+    wxFont badgeFont = m_cartBadge->GetFont();
+    badgeFont.SetPointSize(12);
+    badgeFont.SetWeight(wxFONTWEIGHT_BOLD);
+    m_cartBadge->SetFont(badgeFont);
+    m_cartBadge->SetForegroundColour(*wxWHITE);
+    m_cartBadge->SetBackgroundColour(wxColour(220, 53, 69));
+    headerSizer->Add(m_cartBadge, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
 
-    m_categoryChoice = new wxChoice(m_panel, wxID_ANY,
-                                    wxPoint(760, 20),
-                                    wxSize(200, 35),
-                                    categories);
-    m_categoryChoice->SetSelection(0);
+    wxButton* cartBtn = new wxButton(headerPanel, ID_CART, "Mon Panier",
+                                     wxDefaultPosition, wxSize(160, 45));
+    cartBtn->SetBackgroundColour(wxColour(255, 140, 0));
+    cartBtn->SetForegroundColour(*wxWHITE);
+    wxFont cartBtnFont = cartBtn->GetFont();
+    cartBtnFont.SetPointSize(11);
+    cartBtnFont.SetWeight(wxFONTWEIGHT_BOLD);
+    cartBtn->SetFont(cartBtnFont);
+    headerSizer->Add(cartBtn, 0, wxRIGHT, 30);
 
-    m_viewCartBtn = new wxButton(m_panel, ID_VIEW_CART,
-                                 "Panier (0)",
-                                 wxPoint(1000, 20),
-                                 wxSize(150, 35));
-    m_viewCartBtn->SetBackgroundColour(wxColour(255, 140, 0));
-    m_viewCartBtn->SetForegroundColour(*wxWHITE);
+    headerPanel->SetSizer(headerSizer);
+    mainSizer->Add(headerPanel, 0, wxALL | wxEXPAND, 0);
 
-    m_productList = new wxListCtrl(m_panel, wxID_ANY,
-                                   wxPoint(30, 80),
-                                   wxSize(1120, 600),
-                                   wxLC_REPORT | wxLC_SINGLE_SEL);
+    // ZONE SCROLLABLE POUR LES CARTES
+    m_scrolledWindow = new wxScrolledWindow(mainPanel, wxID_ANY,
+                                           wxDefaultPosition,
+                                           wxDefaultSize,
+                                           wxVSCROLL);
+    m_scrolledWindow->SetScrollRate(0, 20);
+    m_scrolledWindow->SetBackgroundColour(wxColour(245, 245, 250));
 
-    m_productList->InsertColumn(0, "ID", wxLIST_FORMAT_CENTER, 50);
-    m_productList->InsertColumn(1, "Produit", wxLIST_FORMAT_LEFT, 400);
-    m_productList->InsertColumn(2, "Categorie", wxLIST_FORMAT_LEFT, 150);
-    m_productList->InsertColumn(3, "Prix", wxLIST_FORMAT_RIGHT, 120);
-    m_productList->InsertColumn(4, "Stock", wxLIST_FORMAT_CENTER, 100);
-    m_productList->InsertColumn(5, "Disponibilite", wxLIST_FORMAT_CENTER, 150);
+    mainSizer->Add(m_scrolledWindow, 1, wxALL | wxEXPAND, 0);
 
-    PopulateProducts();
+    // STATUS BAR
+    m_statusText = new wxStaticText(mainPanel, wxID_ANY, "");
+    m_statusText->SetForegroundColour(wxColour(100, 100, 100));
+    mainSizer->Add(m_statusText, 0, wxALL | wxCENTER, 10);
 
-    m_statusBar = CreateStatusBar();
-    m_statusBar->SetStatusText("Chargement des produits...");
+    // BOUTON RETOUR
+    wxButton* backBtn = new wxButton(mainPanel, ID_BACK, "Retour au menu",
+                                     wxDefaultPosition, wxSize(180, 45));
+    backBtn->SetBackgroundColour(wxColour(108, 117, 125));
+    backBtn->SetForegroundColour(*wxWHITE);
+    mainSizer->Add(backBtn, 0, wxALL | wxCENTER, 15);
 
-    Maximize(true);
+    mainPanel->SetSizer(mainSizer);
+
+    LoadProductCards();
+    UpdateCartBadge();
+
+    Centre();
 }
 
 CatalogueFrame::~CatalogueFrame()
 {
 }
 
-void CatalogueFrame::CreateMenuBar()
+wxPanel* CatalogueFrame::CreateProductCard(wxWindow* parent, const Product& product)
 {
-    m_menuBar = new wxMenuBar;
-
-    wxMenu* menuAccueil = new wxMenu;
-    wxMenuItem* itemAccueil = menuAccueil->Append(wxID_ANY, "Retour menu principal");
-    m_menuBar->Append(menuAccueil, "Accueil");
-
-    wxMenu* menuCompte = new wxMenu;
-    wxMenuItem* itemProfil = menuCompte->Append(wxID_ANY, "Mon profil");
-    m_menuBar->Append(menuCompte, "Mon compte");
-
-    wxMenu* menuPanier = new wxMenu;
-    wxMenuItem* itemVoirPanier = menuPanier->Append(wxID_ANY, "Voir mon panier");
-    m_menuBar->Append(menuPanier, "Panier");
-
-    wxMenu* menuReclamation = new wxMenu;
-    wxMenuItem* itemReclamation = menuReclamation->Append(wxID_ANY, "Faire une reclamation");
-    wxMenuItem* itemSuiviCommande = menuReclamation->Append(wxID_ANY, "Suivre ma commande");
-    m_menuBar->Append(menuReclamation, "Support");
-
-    SetMenuBar(m_menuBar);
-
-    Bind(wxEVT_MENU, [this](wxCommandEvent&) {
-        this->Close();
-    }, itemAccueil->GetId());
-
-    Bind(wxEVT_MENU, [this](wxCommandEvent&) {
-        wxMessageBox("Gestion du profil utilisateur a implementer",
-                     "Mon profil",
-                     wxOK | wxICON_INFORMATION,
-                     this);
-    }, itemProfil->GetId());
-
-    Bind(wxEVT_MENU, [this](wxCommandEvent&) {
-        PanierDialog* dlg = new PanierDialog(this);
-        dlg->ShowModal();
-        dlg->Destroy();
-    }, itemVoirPanier->GetId());
-
-    Bind(wxEVT_MENU, [this](wxCommandEvent&) {
-        wxTextEntryDialog commandeDlg(
-            this,
-            "Entrez le numero de votre commande :",
-            "Numero de commande",
-            ""
-        );
-
-        if(commandeDlg.ShowModal() == wxID_OK)
+    // Calculer stock disponible
+    int stockDisponible = product.stock;
+    if(CartManager::GetInstance().HasProduct(product.id))
+    {
+        std::vector<CartItem> items = CartManager::GetInstance().GetAllItems();
+        for(const auto& item : items)
         {
-            wxString numCmd = commandeDlg.GetValue();
-            long id_commande;
-
-            if(!numCmd.ToLong(&id_commande))
+            if(item.id_produit == product.id)
             {
-                wxMessageBox("Numero de commande invalide.",
-                             "Erreur",
-                             wxOK | wxICON_ERROR,
-                             this);
-                return;
+                stockDisponible -= item.quantite;
+                break;
             }
+        }
+    }
 
-            wxTextEntryDialog reclamDialog(
-                this,
-                "Decrivez votre reclamation :",
-                "Faire une reclamation - CMD-" + numCmd,
-                "",
-                wxOK | wxCANCEL | wxTE_MULTILINE
-            );
+    // Panel de la carte
+    wxPanel* card = new wxPanel(parent, wxID_ANY,
+                               wxDefaultPosition, wxSize(320, 380));
+    card->SetBackgroundColour(*wxWHITE);
 
-            if(reclamDialog.ShowModal() == wxID_OK)
+    wxBoxSizer* cardSizer = new wxBoxSizer(wxVERTICAL);
+
+    // ZONE IMAGE (placeholder coloré)
+    wxPanel* imagePanel = new wxPanel(card, wxID_ANY,
+                                     wxDefaultPosition, wxSize(300, 200));
+
+    // Couleur selon catégorie
+    wxColour imageColor;
+    if(product.categorie == "Electronique")
+        imageColor = wxColour(100, 149, 237);  // Bleu
+    else if(product.categorie == "Vetements")
+        imageColor = wxColour(255, 182, 193);  // Rose
+    else if(product.categorie == "Alimentation")
+        imageColor = wxColour(144, 238, 144);  // Vert
+    else if(product.categorie == "Maison")
+        imageColor = wxColour(255, 218, 185);  // Pêche
+    else if(product.categorie == "Sports")
+        imageColor = wxColour(255, 165, 0);    // Orange
+    else
+        imageColor = wxColour(220, 220, 220);  // Gris
+
+    imagePanel->SetBackgroundColour(imageColor);
+
+    // Texte sur l'image
+    wxBoxSizer* imageSizer = new wxBoxSizer(wxVERTICAL);
+    wxStaticText* imageText = new wxStaticText(imagePanel, wxID_ANY, product.categorie);
+    wxFont imageFont = imageText->GetFont();
+    imageFont.SetPointSize(14);
+    imageFont.SetWeight(wxFONTWEIGHT_BOLD);
+    imageText->SetFont(imageFont);
+    imageText->SetForegroundColour(*wxWHITE);
+    imageSizer->AddStretchSpacer();
+    imageSizer->Add(imageText, 0, wxALL | wxCENTER, 10);
+    imageSizer->AddStretchSpacer();
+    imagePanel->SetSizer(imageSizer);
+
+    cardSizer->Add(imagePanel, 0, wxALL | wxEXPAND, 10);
+
+    // NOM DU PRODUIT
+    wxStaticText* nameText = new wxStaticText(card, wxID_ANY, product.nom,
+                                              wxDefaultPosition, wxSize(300, -1));
+    wxFont nameFont = nameText->GetFont();
+    nameFont.SetPointSize(11);
+    nameFont.SetWeight(wxFONTWEIGHT_BOLD);
+    nameText->SetFont(nameFont);
+    nameText->Wrap(280);
+    cardSizer->Add(nameText, 0, wxLEFT | wxRIGHT, 15);
+
+    cardSizer->AddSpacer(5);
+
+    // PRIX
+    wxStaticText* priceText = new wxStaticText(card, wxID_ANY,
+                                               wxString::Format("%.0f F CFA", product.prix));
+    wxFont priceFont = priceText->GetFont();
+    priceFont.SetPointSize(16);
+    priceFont.SetWeight(wxFONTWEIGHT_BOLD);
+    priceText->SetFont(priceFont);
+    priceText->SetForegroundColour(wxColour(220, 53, 69));
+    cardSizer->Add(priceText, 0, wxLEFT | wxRIGHT, 15);
+
+    cardSizer->AddSpacer(5);
+
+    // STOCK
+    wxString stockText;
+    wxColour stockColor;
+    if(stockDisponible > 10)
+    {
+        stockText = wxString::Format("En stock (%d disponibles)", stockDisponible);
+        stockColor = wxColour(40, 167, 69);
+    }
+    else if(stockDisponible > 0)
+    {
+        stockText = wxString::Format("Stock limite (%d restants)", stockDisponible);
+        stockColor = wxColour(255, 140, 0);
+    }
+    else
+    {
+        stockText = "Rupture de stock";
+        stockColor = wxColour(220, 53, 69);
+    }
+
+    wxStaticText* stockLabel = new wxStaticText(card, wxID_ANY, stockText);
+    wxFont stockFont = stockLabel->GetFont();
+    stockFont.SetPointSize(9);
+    stockLabel->SetFont(stockFont);
+    stockLabel->SetForegroundColour(stockColor);
+    cardSizer->Add(stockLabel, 0, wxLEFT | wxRIGHT, 15);
+
+    cardSizer->AddStretchSpacer();
+
+    // BOUTON AJOUTER AU PANIER
+    wxButton* addBtn = new wxButton(card, ID_ADD_TO_CART_BASE + product.id,
+                                    "Ajouter au panier",
+                                    wxDefaultPosition, wxSize(280, 40));
+
+    if(stockDisponible > 0)
+    {
+        addBtn->SetBackgroundColour(wxColour(40, 167, 69));
+        addBtn->SetForegroundColour(*wxWHITE);
+    }
+    else
+    {
+        addBtn->SetBackgroundColour(wxColour(200, 200, 200));
+        addBtn->SetForegroundColour(wxColour(120, 120, 120));
+        addBtn->Enable(false);
+    }
+
+    wxFont btnFont = addBtn->GetFont();
+    btnFont.SetWeight(wxFONTWEIGHT_BOLD);
+    addBtn->SetFont(btnFont);
+
+    // Connecter l'événement
+    addBtn->Bind(wxEVT_BUTTON, [this, product](wxCommandEvent&) {
+        // Vérifier stock
+        int stockDisponible = product.stock;
+        if(CartManager::GetInstance().HasProduct(product.id))
+        {
+            std::vector<CartItem> items = CartManager::GetInstance().GetAllItems();
+            for(const auto& item : items)
             {
-                wxString reclamation = reclamDialog.GetValue();
-
-                if(!reclamation.IsEmpty())
+                if(item.id_produit == product.id)
                 {
-                    // ENREGISTRER EN BASE DE DONNÉES
-                    int id_reclam = DatabaseManager::GetInstance().CreateReclamation(
-                        (int)id_commande,
-                        "Client Connecte",
-                        "Reclamation generale",
-                        reclamation
-                    );
-
-                    if(id_reclam > 0)
-                    {
-                        wxMessageBox("Reclamation enregistree avec succes !\n\n"
-                                   "Numero de reclamation : REC-" + wxString::Format("%d", id_reclam) + "\n\n"
-                                   "Votre reclamation a ete enregistree en base de donnees.\n"
-                                   "Notre service client vous contactera sous 24-48h.",
-                                   "Reclamation envoyee",
-                                   wxOK | wxICON_INFORMATION,
-                                   this);
-                    }
-                    else
-                    {
-                        wxMessageBox("Erreur lors de l'enregistrement de la reclamation.",
-                                     "Erreur",
-                                     wxOK | wxICON_ERROR,
-                                     this);
-                    }
+                    stockDisponible -= item.quantite;
+                    break;
                 }
             }
         }
-    }, itemReclamation->GetId());
 
-    Bind(wxEVT_MENU, [this](wxCommandEvent&) {
-        wxTextEntryDialog commandeDialog(
-            this,
-            "Entrez votre numero de commande :",
-            "Suivre ma commande",
-            ""
-        );
-
-        if(commandeDialog.ShowModal() == wxID_OK)
+        if(stockDisponible <= 0)
         {
-            wxString numCommande = commandeDialog.GetValue();
-            if(!numCommande.IsEmpty())
-            {
-                wxMessageBox("Suivi de commande : " + numCommande + "\n\n"
-                           "Statut : En cours de livraison\n"
-                           "N° de suivi : TRK-2026-123\n"
-                           "Livraison prevue : 20/01/2026\n"
-                           "Transporteur : DHL Express",
-                           "Statut de la commande",
-                           wxOK | wxICON_INFORMATION,
-                           this);
-            }
-        }
-    }, itemSuiviCommande->GetId());
-}
-
-
-void CatalogueFrame::PopulateProducts()
-{
-    m_productList->DeleteAllItems();
-
-    try
-    {
-        // CHARGER DEPUIS LA BASE DE DONNÉES
-        m_products = DatabaseManager::GetInstance().GetAllProducts();
-
-        wxLogMessage("Chargement de %zu produits", m_products.size());
-
-        for(size_t i = 0; i < m_products.size(); i++)
-        {
-            const Product& p = m_products[i];
-
-            long index = m_productList->InsertItem(i, wxString::Format("%d", p.id));
-            m_productList->SetItem(index, 1, p.nom);
-            m_productList->SetItem(index, 2, p.categorie);
-            m_productList->SetItem(index, 3, wxString::Format("%.0f F", p.prix));
-            m_productList->SetItem(index, 4, wxString::Format("%d", p.stock));
-            m_productList->SetItem(index, 5, p.stock > 0 ? "En stock" : "Rupture");
-
-            if(p.stock > 0)
-                m_productList->SetItemTextColour(index, wxColour(0, 128, 0));
-            else
-                m_productList->SetItemTextColour(index, wxColour(200, 0, 0));
-        }
-
-        m_statusBar->SetStatusText(wxString::Format("%zu produits affiches", m_products.size()));
-    }
-    catch(const std::exception& e)
-    {
-        wxLogError("Erreur lors du chargement des produits: %s", e.what());
-        m_statusBar->SetStatusText("Erreur de chargement");
-
-        wxMessageBox("Erreur lors du chargement des produits depuis la base de donnees.",
-                     "Erreur",
-                     wxOK | wxICON_ERROR,
-                     this);
-    }
-}
-
-
-
-
-void CatalogueFrame::OnSearch(wxCommandEvent& event)
-{
-    wxString searchText = m_searchCtrl->GetValue();
-
-    if(searchText.IsEmpty())
-    {
-        wxMessageBox("Veuillez entrer un terme de recherche.",
-                     "Recherche",
-                     wxOK | wxICON_WARNING,
-                     this);
-        return;
-    }
-
-    wxString message;
-    message << "Recherche de : \"" << searchText << "\"\n\n"
-            << "Fonctionnalite de recherche active !\n"
-            << "Les resultats s'afficheraient ici.";
-
-    m_statusBar->SetStatusText("Recherche : " + searchText);
-
-    wxMessageBox(message,
-                 "Resultats de recherche",
-                 wxOK | wxICON_INFORMATION,
-                 this);
-}
-
-void CatalogueFrame::OnViewCart(wxCommandEvent& event)
-{
-    PanierDialog* dlg = new PanierDialog(this);
-    dlg->ShowModal();
-    dlg->Destroy();
-}
-
-void CatalogueFrame::OnProductDoubleClick(wxListEvent& event)
-{
-    long index = event.GetIndex();
-
-    if(index < 0 || index >= (long)m_products.size())
-        return;
-
-    const Product& product = m_products[index];
-
-    wxString details;
-    details << "================================\n"
-            << "DETAILS DU PRODUIT\n"
-            << "================================\n\n"
-            << "Nom : " << product.nom << "\n"
-            << "Categorie : " << product.categorie << "\n"
-            << "Prix : " << wxString::Format("%.0f F", product.prix) << "\n"
-            << "Stock disponible : " << product.stock << " unites\n\n"
-            << "Description :\n" << product.description << "\n\n"
-            << "================================";
-
-    if(product.stock <= 0)
-    {
-        wxMessageBox(details + "\n\nProduit en rupture de stock.",
-                     "Details - " + product.nom,
-                     wxOK | wxICON_WARNING,
-                     this);
-        return;
-    }
-
-    wxTextEntryDialog quantityDlg(
-        this,
-        details + "\n\nQuantite a ajouter au panier :",
-        "Ajouter au panier - " + product.nom,
-        "1"
-    );
-
-    if(quantityDlg.ShowModal() == wxID_OK)
-    {
-        wxString qtyStr = quantityDlg.GetValue();
-        long quantity;
-
-        if(!qtyStr.ToLong(&quantity) || quantity <= 0)
-        {
-            wxMessageBox("Quantite invalide.",
-                         "Erreur",
-                         wxOK | wxICON_ERROR,
-                         this);
-            return;
-        }
-
-        if(quantity > product.stock)
-        {
-            wxMessageBox(wxString::Format("Stock insuffisant !\n\nStock disponible : %d", product.stock),
-                         "Stock insuffisant",
+            wxMessageBox("Ce produit n'est plus en stock.",
+                         "Stock epuise",
                          wxOK | wxICON_WARNING,
                          this);
             return;
         }
 
-        m_cartItemCount += quantity;
-        m_viewCartBtn->SetLabel(wxString::Format("Panier (%d)", m_cartItemCount));
+        // Ajouter 1 au panier
+        CartManager::GetInstance().AddProduct(product.id, product.nom, product.prix, 1);
 
-        wxMessageBox(wxString::Format("Produit ajoute au panier !\n\n"
-                                      "Produit : %s\n"
-                                      "Quantite : %ld\n"
-                                      "Prix unitaire : %.0f F\n"
-                                      "Sous-total : %.0f F",
-                                      product.nom, quantity, product.prix, product.prix * quantity),
-                     "Ajout au panier",
+        wxMessageBox(wxString::Format("%s ajoute au panier !\n\nPrix : %.0f F CFA",
+                                       product.nom, product.prix),
+                     "Ajoute au panier",
                      wxOK | wxICON_INFORMATION,
                      this);
+
+        UpdateCartBadge();
+        LoadProductCards();
+    });
+
+    cardSizer->Add(addBtn, 0, wxALL | wxCENTER, 10);
+
+    card->SetSizer(cardSizer);
+
+    return card;
+}
+
+void CatalogueFrame::LoadProductCards()
+{
+    // Détruire l'ancien panel s'il existe
+    if(m_cardsPanel)
+    {
+        m_cardsPanel->Destroy();
     }
+
+    // Créer nouveau panel
+    m_cardsPanel = new wxPanel(m_scrolledWindow);
+    m_cardsPanel->SetBackgroundColour(wxColour(245, 245, 250));
+
+    wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+
+    // Récupérer les produits
+    std::vector<Product> products = DatabaseManager::GetInstance().GetAllProducts();
+
+    if(products.empty())
+    {
+        m_statusText->SetLabel("Aucun produit trouve");
+        return;
+    }
+
+    // Créer grille de cartes (4 par ligne)
+    wxGridSizer* gridSizer = new wxGridSizer(4, 20, 20);
+
+    for(const auto& product : products)
+    {
+        wxPanel* card = CreateProductCard(m_cardsPanel, product);
+        gridSizer->Add(card, 0, wxALL, 0);
+    }
+
+    mainSizer->Add(gridSizer, 0, wxALL, 30);
+
+    m_cardsPanel->SetSizer(mainSizer);
+    m_cardsPanel->Layout();
+
+    // Configurer le scrolled window
+    wxBoxSizer* scrollSizer = new wxBoxSizer(wxVERTICAL);
+    scrollSizer->Add(m_cardsPanel, 0, wxEXPAND);
+    m_scrolledWindow->SetSizer(scrollSizer);
+    m_scrolledWindow->FitInside();
+    m_scrolledWindow->Layout();
+
+    m_statusText->SetLabel(wxString::Format("%zu produits disponibles", products.size()));
+}
+
+void CatalogueFrame::UpdateCartBadge()
+{
+    int itemCount = CartManager::GetInstance().GetItemCount();
+    m_cartBadge->SetLabel(wxString::Format("%d", itemCount));
+}
+
+void CatalogueFrame::OnBack(wxCommandEvent& event)
+{
+    Close();
+}
+
+void CatalogueFrame::OnCart(wxCommandEvent& event)
+{
+    PanierDialog dlg(this);
+    dlg.ShowModal();
+
+    UpdateCartBadge();
+    LoadProductCards();
+}
+
+void CatalogueFrame::OnAddToCart(wxCommandEvent& event)
+{
+    // Géré dans les lambdas des boutons individuels
 }

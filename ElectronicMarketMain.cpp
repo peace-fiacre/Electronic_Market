@@ -11,9 +11,12 @@
 #include "PanierDialog.h"
 #include "AdminProductsFrame.h"
 #include "ElectronicMarketMain.h"
-#include "LivreurFrame.h"        // NOUVEAU
-#include "ServiceClientFrame.h"  // NOUVEAU
+#include "LivreurFrame.h"
+#include "ServiceClientFrame.h"
 #include <wx/msgdlg.h>
+#include <iostream>
+#include "ClientSupportFrame.h"
+
 
 //(*InternalHeaders(ElectronicMarketFrame)
 #include <wx/intl.h>
@@ -56,15 +59,6 @@ BEGIN_EVENT_TABLE(ElectronicMarketFrame,wxFrame)
     //(*EventTable(ElectronicMarketFrame)
     //*)
 END_EVENT_TABLE()
-
-
-
-
-
-
-
-// À REMPLACER dans ElectronicMarketMain.cpp
-// Remplacez UNIQUEMENT le constructeur ElectronicMarketFrame::ElectronicMarketFrame
 
 ElectronicMarketFrame::ElectronicMarketFrame(wxWindow* parent,wxWindowID id)
 {
@@ -117,40 +111,44 @@ ElectronicMarketFrame::ElectronicMarketFrame(wxWindow* parent,wxWindowID id)
     btnFont.SetPointSize(12);
     btnFont.SetWeight(wxFONTWEIGHT_BOLD);
 
+    // ========================================
     // MODULE CLIENT
+    // ========================================
     wxStaticText* clientLabel = new wxStaticText(panel, wxID_ANY, "MODULE CLIENT :");
     clientLabel->SetFont(labelFont);
     mainSizer->Add(clientLabel, 0, wxLEFT | wxTOP, 30);
 
     wxButton* catalogueBtn = new wxButton(panel, wxID_ANY, "Catalogue Produits",
-                                          wxDefaultPosition, wxSize(350, 55));
+                                          wxDefaultPosition, wxSize(350, 60));
     catalogueBtn->SetBackgroundColour(wxColour(0, 123, 255));
     catalogueBtn->SetForegroundColour(*wxWHITE);
     catalogueBtn->SetFont(btnFont);
     mainSizer->Add(catalogueBtn, 0, wxLEFT | wxTOP, 30);
 
     wxButton* panierBtn = new wxButton(panel, wxID_ANY, "Mon Panier",
-                                       wxDefaultPosition, wxSize(350, 55));
+                                       wxDefaultPosition, wxSize(350, 60));
     panierBtn->SetBackgroundColour(wxColour(40, 167, 69));
     panierBtn->SetForegroundColour(*wxWHITE);
     panierBtn->SetFont(btnFont);
     mainSizer->Add(panierBtn, 0, wxLEFT | wxTOP, 30);
 
     wxButton* supportBtn = new wxButton(panel, wxID_ANY, "Support & Reclamations",
-                                        wxDefaultPosition, wxSize(350, 55));
+                                        wxDefaultPosition, wxSize(350, 60));
     supportBtn->SetBackgroundColour(wxColour(255, 193, 7));
     supportBtn->SetFont(btnFont);
     mainSizer->Add(supportBtn, 0, wxLEFT | wxTOP, 30);
 
     mainSizer->AddSpacer(20);
 
+    // ========================================
     // MODULE ADMIN
+    // ========================================
     wxStaticText* adminLabel = new wxStaticText(panel, wxID_ANY, "MODULE ADMIN :");
     adminLabel->SetFont(labelFont);
     mainSizer->Add(adminLabel, 0, wxLEFT | wxTOP, 30);
 
     wxButton* adminBtn = new wxButton(panel, wxID_ANY, "Gestion Produits",
-                                      wxDefaultPosition, wxSize(350, 55));
+                                      wxDefaultPosition, wxSize(350, 60));
     adminBtn->SetBackgroundColour(wxColour(108, 117, 125));
     adminBtn->SetForegroundColour(*wxWHITE);
     adminBtn->SetFont(btnFont);
@@ -158,13 +156,15 @@ ElectronicMarketFrame::ElectronicMarketFrame(wxWindow* parent,wxWindowID id)
 
     mainSizer->AddSpacer(20);
 
+    // ========================================
     // MODULE LIVREUR
+    // ========================================
     wxStaticText* livreurLabel = new wxStaticText(panel, wxID_ANY, "MODULE LIVREUR :");
     livreurLabel->SetFont(labelFont);
     mainSizer->Add(livreurLabel, 0, wxLEFT | wxTOP, 30);
 
     wxButton* livreurBtn = new wxButton(panel, wxID_ANY, "Mes Livraisons",
-                                        wxDefaultPosition, wxSize(350, 55));
+                                        wxDefaultPosition, wxSize(350, 60));
     livreurBtn->SetBackgroundColour(wxColour(255, 140, 0));
     livreurBtn->SetForegroundColour(*wxWHITE);
     livreurBtn->SetFont(btnFont);
@@ -172,13 +172,15 @@ ElectronicMarketFrame::ElectronicMarketFrame(wxWindow* parent,wxWindowID id)
 
     mainSizer->AddSpacer(20);
 
+    // ========================================
     // MODULE SERVICE CLIENT
+    // ========================================
     wxStaticText* serviceLabel = new wxStaticText(panel, wxID_ANY, "MODULE SERVICE CLIENT :");
     serviceLabel->SetFont(labelFont);
     mainSizer->Add(serviceLabel, 0, wxLEFT | wxTOP, 30);
 
     wxButton* serviceClientBtn = new wxButton(panel, wxID_ANY, "Reclamations et Retours",
-                                              wxDefaultPosition, wxSize(350, 55));
+                                              wxDefaultPosition, wxSize(350, 60));
     serviceClientBtn->SetBackgroundColour(wxColour(220, 53, 69));
     serviceClientBtn->SetForegroundColour(*wxWHITE);
     serviceClientBtn->SetFont(btnFont);
@@ -186,124 +188,46 @@ ElectronicMarketFrame::ElectronicMarketFrame(wxWindow* parent,wxWindowID id)
 
     panel->SetSizer(mainSizer);
 
-    // Événements
-    catalogueBtn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
-        CatalogueFrame* frame = new CatalogueFrame(this);
+    // ========================================
+    // ÉVÉNEMENTS DES BOUTONS
+    // ========================================
+
+    catalogueBtn->Bind(wxEVT_BUTTON, [](wxCommandEvent&) {
+        CatalogueFrame* frame = new CatalogueFrame(NULL);
         frame->Show();
     });
 
-    panierBtn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
-        PanierDialog* dlg = new PanierDialog(this);
-        dlg->ShowModal();
-        dlg->Destroy();
+    panierBtn->Bind(wxEVT_BUTTON, [](wxCommandEvent&) {
+        PanierDialog dlg(NULL);
+        dlg.ShowModal();
     });
 
-    supportBtn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
-        wxArrayString options;
-        options.Add("Faire une reclamation");
-        options.Add("Suivre ma commande");
-        options.Add("Contacter le service client");
-
-        wxSingleChoiceDialog choiceDialog(
-            this,
-            "Que souhaitez-vous faire ?",
-            "Support Client",
-            options
-        );
-
-        if(choiceDialog.ShowModal() == wxID_OK)
-        {
-            int selection = choiceDialog.GetSelection();
-
-            if(selection == 0) // Réclamation
-            {
-                wxTextEntryDialog reclamDialog(
-                    this,
-                    "Decrivez votre reclamation :",
-                    "Faire une reclamation",
-                    "",
-                    wxOK | wxCANCEL | wxTE_MULTILINE
-                );
-
-                if(reclamDialog.ShowModal() == wxID_OK)
-                {
-                    wxString reclamation = reclamDialog.GetValue();
-                    if(!reclamation.IsEmpty())
-                    {
-                        wxMessageBox("Reclamation enregistree avec succes !\n\n"
-                                   "Numero de reclamation : REC-" + wxString::Format("%03d", wxGetLocalTime() % 1000) + "\n\n"
-                                   "Notre service client vous contactera sous 24-48h.",
-                                   "Reclamation envoyee",
-                                   wxOK | wxICON_INFORMATION,
-                                   this);
-                    }
-                }
-            }
-            else if(selection == 1) // Suivi commande
-            {
-                wxTextEntryDialog commandeDialog(
-                    this,
-                    "Entrez votre numero de commande :",
-                    "Suivre ma commande",
-                    ""
-                );
-
-                if(commandeDialog.ShowModal() == wxID_OK)
-                {
-                    wxString numCommande = commandeDialog.GetValue();
-                    if(!numCommande.IsEmpty())
-                    {
-                        wxMessageBox("Suivi de commande : " + numCommande + "\n\n"
-                                   "Statut : En cours de livraison\n"
-                                   "N° de suivi : TRK-2026-123\n"
-                                   "Livraison prevue : 20/01/2026\n"
-                                   "Transporteur : DHL Express",
-                                   "Statut de la commande",
-                                   wxOK | wxICON_INFORMATION,
-                                   this);
-                    }
-                }
-            }
-            else // Contacter service client
-            {
-                wxMessageBox("Service Client\n\n"
-                           "Email : support@ecommerce.com\n"
-                           "Telephone : +229 XX XX XX XX\n"
-                           "Horaires : Lundi-Vendredi 8h-18h",
-                           "Contact",
-                           wxOK | wxICON_INFORMATION,
-                           this);
-            }
-        }
+    // ✅ BOUTON SUPPORT CORRIGÉ
+    supportBtn->Bind(wxEVT_BUTTON, [](wxCommandEvent&) {
+       ClientSupportFrame* frame = new ClientSupportFrame(NULL);
+       frame->Show();
     });
 
-    adminBtn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
-        AdminProductsFrame* frame = new AdminProductsFrame(this);
+
+
+    adminBtn->Bind(wxEVT_BUTTON, [](wxCommandEvent&) {
+        AdminProductsFrame* frame = new AdminProductsFrame(NULL);
         frame->Show();
     });
 
-    livreurBtn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
-        LivreurFrame* frame = new LivreurFrame(this);
+    livreurBtn->Bind(wxEVT_BUTTON, [](wxCommandEvent&) {
+        LivreurFrame* frame = new LivreurFrame(NULL);
         frame->Show();
     });
 
-    serviceClientBtn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
-        ServiceClientFrame* frame = new ServiceClientFrame(this);
+    serviceClientBtn->Bind(wxEVT_BUTTON, [](wxCommandEvent&) {
+        ServiceClientFrame* frame = new ServiceClientFrame(NULL);
         frame->Show();
     });
 
-    SetSize(650, 800);
+    SetSize(650, 850);
     Centre();
 }
-
-
-
-
-
-
-
-
-
 
 ElectronicMarketFrame::~ElectronicMarketFrame()
 {
@@ -321,4 +245,3 @@ void ElectronicMarketFrame::OnAbout(wxCommandEvent& event)
     wxString msg = wxbuildinfo(long_f);
     wxMessageBox(msg, _("Welcome to..."));
 }
-
