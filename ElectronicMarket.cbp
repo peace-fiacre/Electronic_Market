@@ -44,8 +44,12 @@
 		<Unit filename="AddProductDialog.h" />
 		<Unit filename="AdminProductsFrame.cpp" />
 		<Unit filename="AdminProductsFrame.h" />
+		<Unit filename="CartManager.cpp" />
+		<Unit filename="CartManager.h" />
 		<Unit filename="CatalogueFrame.cpp" />
 		<Unit filename="CatalogueFrame.h" />
+		<Unit filename="ClientSupportFrame.cpp" />
+		<Unit filename="ClientSupportFrame.h" />
 		<Unit filename="DatabaseManager.cpp" />
 		<Unit filename="DatabaseManager.h" />
 		<Unit filename="ElectronicMarket.cbp" />

@@ -19,6 +19,8 @@ CatalogueFrame::CatalogueFrame(wxWindow* parent)
     : wxFrame(parent, wxID_ANY, "Catalogue Produits",
               wxDefaultPosition, wxSize(1400, 900))
 {
+    m_cardsPanel = NULL;  // ← IMPORTANT: Initialiser à NULL
+
     wxPanel* mainPanel = new wxPanel(this);
     mainPanel->SetBackgroundColour(wxColour(245, 245, 250));
 
@@ -93,6 +95,7 @@ CatalogueFrame::CatalogueFrame(wxWindow* parent)
 
 CatalogueFrame::~CatalogueFrame()
 {
+    // Destruction automatique gérée par wxWidgets
 }
 
 wxPanel* CatalogueFrame::CreateProductCard(wxWindow* parent, const Product& product)
@@ -126,21 +129,20 @@ wxPanel* CatalogueFrame::CreateProductCard(wxWindow* parent, const Product& prod
     // Couleur selon catégorie
     wxColour imageColor;
     if(product.categorie == "Electronique")
-        imageColor = wxColour(100, 149, 237);  // Bleu
+        imageColor = wxColour(100, 149, 237);
     else if(product.categorie == "Vetements")
-        imageColor = wxColour(255, 182, 193);  // Rose
+        imageColor = wxColour(255, 182, 193);
     else if(product.categorie == "Alimentation")
-        imageColor = wxColour(144, 238, 144);  // Vert
+        imageColor = wxColour(144, 238, 144);
     else if(product.categorie == "Maison")
-        imageColor = wxColour(255, 218, 185);  // Pêche
+        imageColor = wxColour(255, 218, 185);
     else if(product.categorie == "Sports")
-        imageColor = wxColour(255, 165, 0);    // Orange
+        imageColor = wxColour(255, 165, 0);
     else
-        imageColor = wxColour(220, 220, 220);  // Gris
+        imageColor = wxColour(220, 220, 220);
 
     imagePanel->SetBackgroundColour(imageColor);
 
-    // Texte sur l'image
     wxBoxSizer* imageSizer = new wxBoxSizer(wxVERTICAL);
     wxStaticText* imageText = new wxStaticText(imagePanel, wxID_ANY, product.categorie);
     wxFont imageFont = imageText->GetFont();
@@ -228,9 +230,8 @@ wxPanel* CatalogueFrame::CreateProductCard(wxWindow* parent, const Product& prod
     btnFont.SetWeight(wxFONTWEIGHT_BOLD);
     addBtn->SetFont(btnFont);
 
-    // Connecter l'événement
+    // ← CORRECTION ICI: Capturer product par COPIE
     addBtn->Bind(wxEVT_BUTTON, [this, product](wxCommandEvent&) {
-        // Vérifier stock
         int stockDisponible = product.stock;
         if(CartManager::GetInstance().HasProduct(product.id))
         {
@@ -254,7 +255,6 @@ wxPanel* CatalogueFrame::CreateProductCard(wxWindow* parent, const Product& prod
             return;
         }
 
-        // Ajouter 1 au panier
         CartManager::GetInstance().AddProduct(product.id, product.nom, product.prix, 1);
 
         wxMessageBox(wxString::Format("%s ajoute au panier !\n\nPrix : %.0f F CFA",
@@ -276,10 +276,11 @@ wxPanel* CatalogueFrame::CreateProductCard(wxWindow* parent, const Product& prod
 
 void CatalogueFrame::LoadProductCards()
 {
-    // Détruire l'ancien panel s'il existe
-    if(m_cardsPanel)
+    // ← CORRECTION ICI: Vérifier si m_cardsPanel existe avant de détruire
+    if(m_cardsPanel && m_scrolledWindow)
     {
-        m_cardsPanel->Destroy();
+        m_scrolledWindow->DestroyChildren();  // Détruire tous les enfants
+        m_cardsPanel = NULL;
     }
 
     // Créer nouveau panel
@@ -329,7 +330,7 @@ void CatalogueFrame::UpdateCartBadge()
 
 void CatalogueFrame::OnBack(wxCommandEvent& event)
 {
-    Close();
+    Close(true);  // ← Forcer la fermeture
 }
 
 void CatalogueFrame::OnCart(wxCommandEvent& event)
