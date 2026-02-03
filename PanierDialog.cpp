@@ -8,6 +8,7 @@
 #include "PanierDialog.h"
 #include "CartManager.h"
 #include "DatabaseManager.h"
+#include "Headers/Theme.h"
 
 wxBEGIN_EVENT_TABLE(PanierDialog, wxDialog)
     EVT_BUTTON(ID_CONTINUE, PanierDialog::OnContinue)
@@ -23,7 +24,7 @@ PanierDialog::PanierDialog(wxWindow* parent)
                wxDefaultPosition, wxSize(950, 700))
 {
     wxPanel* panel = new wxPanel(this);
-    panel->SetBackgroundColour(wxColour(245, 245, 245));
+    panel->SetBackgroundColour(Theme::Background());
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -61,12 +62,14 @@ PanierDialog::PanierDialog(wxWindow* parent)
 
     wxButton* removeBtn = new wxButton(panel, ID_REMOVE, "Retirer article",
                                        wxDefaultPosition, wxSize(140, 35));
-    removeBtn->SetBackgroundColour(wxColour(220, 53, 69));
+    removeBtn->SetBackgroundColour(Theme::Danger());
     removeBtn->SetForegroundColour(*wxWHITE);
+    removeBtn->SetToolTip("Retirer l\'article sélectionné du panier");
     qtyBtnSizer->Add(removeBtn, 0, wxRIGHT, 10);
 
     wxButton* clearBtn = new wxButton(panel, ID_CLEAR, "Vider panier",
                                       wxDefaultPosition, wxSize(130, 35));
+    clearBtn->SetToolTip("Vider complètement le panier");
     qtyBtnSizer->Add(clearBtn, 0);
 
     mainSizer->Add(qtyBtnSizer, 0, wxALL | wxCENTER, 10);
@@ -77,7 +80,7 @@ PanierDialog::PanierDialog(wxWindow* parent)
     totalFont.SetPointSize(16);
     totalFont.SetWeight(wxFONTWEIGHT_BOLD);
     m_totalText->SetFont(totalFont);
-    m_totalText->SetForegroundColour(wxColour(0, 102, 204));
+    m_totalText->SetForegroundColour(Theme::PrimaryAlt());
     mainSizer->Add(m_totalText, 0, wxALL | wxCENTER, 15);
 
     // BOUTONS PRINCIPAUX
@@ -92,8 +95,9 @@ PanierDialog::PanierDialog(wxWindow* parent)
 
     wxButton* validateBtn = new wxButton(panel, ID_VALIDATE, "VALIDER LA COMMANDE",
                                          wxDefaultPosition, wxSize(250, 50));
-    validateBtn->SetBackgroundColour(wxColour(40, 167, 69));
+    validateBtn->SetBackgroundColour(Theme::Success());
     validateBtn->SetForegroundColour(*wxWHITE);
+    validateBtn->SetToolTip("Valider la commande et passer au paiement");
     wxFont btnFont = validateBtn->GetFont();
     btnFont.SetWeight(wxFONTWEIGHT_BOLD);
     btnFont.SetPointSize(12);

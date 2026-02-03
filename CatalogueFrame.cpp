@@ -9,6 +9,7 @@
 #include "PanierDialog.h"
 #include "DatabaseManager.h"
 #include "CartManager.h"
+#include "Headers/Theme.h"
 
 wxBEGIN_EVENT_TABLE(CatalogueFrame, wxFrame)
     EVT_BUTTON(ID_BACK, CatalogueFrame::OnBack)
@@ -22,7 +23,7 @@ CatalogueFrame::CatalogueFrame(wxWindow* parent)
     m_cardsPanel = NULL;  // ← IMPORTANT: Initialiser à NULL
 
     wxPanel* mainPanel = new wxPanel(this);
-    mainPanel->SetBackgroundColour(wxColour(245, 245, 250));
+    mainPanel->SetBackgroundColour(Theme::Background());
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -36,7 +37,7 @@ CatalogueFrame::CatalogueFrame(wxWindow* parent)
     titleFont.SetPointSize(20);
     titleFont.SetWeight(wxFONTWEIGHT_BOLD);
     titleText->SetFont(titleFont);
-    titleText->SetForegroundColour(wxColour(0, 102, 204));
+    titleText->SetForegroundColour(Theme::PrimaryAlt());
     headerSizer->Add(titleText, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, 30);
 
     // Badge panier
@@ -47,13 +48,14 @@ CatalogueFrame::CatalogueFrame(wxWindow* parent)
     badgeFont.SetWeight(wxFONTWEIGHT_BOLD);
     m_cartBadge->SetFont(badgeFont);
     m_cartBadge->SetForegroundColour(*wxWHITE);
-    m_cartBadge->SetBackgroundColour(wxColour(220, 53, 69));
+    m_cartBadge->SetBackgroundColour(Theme::Danger());
     headerSizer->Add(m_cartBadge, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
 
     wxButton* cartBtn = new wxButton(headerPanel, ID_CART, "Mon Panier",
                                      wxDefaultPosition, wxSize(160, 45));
-    cartBtn->SetBackgroundColour(wxColour(255, 140, 0));
+    cartBtn->SetBackgroundColour(Theme::Accent());
     cartBtn->SetForegroundColour(*wxWHITE);
+    cartBtn->SetToolTip("Voir le contenu du panier (Ctrl+2)");
     wxFont cartBtnFont = cartBtn->GetFont();
     cartBtnFont.SetPointSize(11);
     cartBtnFont.SetWeight(wxFONTWEIGHT_BOLD);
@@ -69,20 +71,21 @@ CatalogueFrame::CatalogueFrame(wxWindow* parent)
                                            wxDefaultSize,
                                            wxVSCROLL);
     m_scrolledWindow->SetScrollRate(0, 20);
-    m_scrolledWindow->SetBackgroundColour(wxColour(245, 245, 250));
+    m_scrolledWindow->SetBackgroundColour(Theme::Background());
 
     mainSizer->Add(m_scrolledWindow, 1, wxALL | wxEXPAND, 0);
 
     // STATUS BAR
     m_statusText = new wxStaticText(mainPanel, wxID_ANY, "");
-    m_statusText->SetForegroundColour(wxColour(100, 100, 100));
+    m_statusText->SetForegroundColour(Theme::Muted());
     mainSizer->Add(m_statusText, 0, wxALL | wxCENTER, 10);
 
     // BOUTON RETOUR
     wxButton* backBtn = new wxButton(mainPanel, ID_BACK, "Retour au menu",
                                      wxDefaultPosition, wxSize(180, 45));
-    backBtn->SetBackgroundColour(wxColour(108, 117, 125));
+    backBtn->SetBackgroundColour(Theme::Neutral());
     backBtn->SetForegroundColour(*wxWHITE);
+    backBtn->SetToolTip("Retourner au menu principal");
     mainSizer->Add(backBtn, 0, wxALL | wxCENTER, 15);
 
     mainPanel->SetSizer(mainSizer);
@@ -176,7 +179,7 @@ wxPanel* CatalogueFrame::CreateProductCard(wxWindow* parent, const Product& prod
     priceFont.SetPointSize(16);
     priceFont.SetWeight(wxFONTWEIGHT_BOLD);
     priceText->SetFont(priceFont);
-    priceText->SetForegroundColour(wxColour(220, 53, 69));
+    priceText->SetForegroundColour(Theme::Danger());
     cardSizer->Add(priceText, 0, wxLEFT | wxRIGHT, 15);
 
     cardSizer->AddSpacer(5);
@@ -187,17 +190,17 @@ wxPanel* CatalogueFrame::CreateProductCard(wxWindow* parent, const Product& prod
     if(stockDisponible > 10)
     {
         stockText = wxString::Format("En stock (%d disponibles)", stockDisponible);
-        stockColor = wxColour(40, 167, 69);
+        stockColor = Theme::Success();
     }
     else if(stockDisponible > 0)
     {
         stockText = wxString::Format("Stock limite (%d restants)", stockDisponible);
-        stockColor = wxColour(255, 140, 0);
+        stockColor = Theme::Accent();
     }
     else
     {
         stockText = "Rupture de stock";
-        stockColor = wxColour(220, 53, 69);
+        stockColor = Theme::Danger();
     }
 
     wxStaticText* stockLabel = new wxStaticText(card, wxID_ANY, stockText);
@@ -216,13 +219,14 @@ wxPanel* CatalogueFrame::CreateProductCard(wxWindow* parent, const Product& prod
 
     if(stockDisponible > 0)
     {
-        addBtn->SetBackgroundColour(wxColour(40, 167, 69));
+        addBtn->SetBackgroundColour(Theme::Success());
         addBtn->SetForegroundColour(*wxWHITE);
+        addBtn->SetToolTip("Ajouter ce produit au panier");
     }
     else
     {
-        addBtn->SetBackgroundColour(wxColour(200, 200, 200));
-        addBtn->SetForegroundColour(wxColour(120, 120, 120));
+        addBtn->SetBackgroundColour(Theme::Neutral());
+        addBtn->SetForegroundColour(Theme::Muted());
         addBtn->Enable(false);
     }
 
@@ -285,7 +289,7 @@ void CatalogueFrame::LoadProductCards()
 
     // Créer nouveau panel
     m_cardsPanel = new wxPanel(m_scrolledWindow);
-    m_cardsPanel->SetBackgroundColour(wxColour(245, 245, 250));
+    m_cardsPanel->SetBackgroundColour(Theme::Background());
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 

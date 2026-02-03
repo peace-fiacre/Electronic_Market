@@ -7,6 +7,7 @@
 
 #include "ClientSupportFrame.h"
 #include "DatabaseManager.h"
+#include "Headers/Theme.h"
 
 wxBEGIN_EVENT_TABLE(ClientSupportFrame, wxFrame)
     EVT_LIST_ITEM_SELECTED(wxID_ANY, ClientSupportFrame::OnOrderSelected)
@@ -43,7 +44,7 @@ ClientSupportFrame::ClientSupportFrame(wxWindow* parent)
     titleFont.SetPointSize(20);
     titleFont.SetWeight(wxFONTWEIGHT_BOLD);
     titleText->SetFont(titleFont);
-    titleText->SetForegroundColour(wxColour(0, 102, 204));
+    titleText->SetForegroundColour(Theme::PrimaryAlt());
     mainSizer->Add(titleText, 0, wxALL | wxCENTER, 20);
 
     // Notebook
@@ -113,20 +114,23 @@ void ClientSupportFrame::CreateOrdersPage()
 
     wxButton* viewBtn = new wxButton(m_ordersPage, ID_VIEW_DETAILS, "Voir details",
                                      wxDefaultPosition, wxSize(140, 40));
-    viewBtn->SetBackgroundColour(wxColour(0, 123, 255));
+    viewBtn->SetBackgroundColour(Theme::Primary());
     viewBtn->SetForegroundColour(*wxWHITE);
+    viewBtn->SetToolTip("Afficher les détails de la commande sélectionnée");
     btnSizer->Add(viewBtn, 0, wxRIGHT, 10);
 
     wxButton* trackBtn = new wxButton(m_ordersPage, ID_TRACK_ORDER, "Suivre livraison",
                                       wxDefaultPosition, wxSize(140, 40));
-    trackBtn->SetBackgroundColour(wxColour(255, 140, 0));
+    trackBtn->SetBackgroundColour(Theme::Accent());
     trackBtn->SetForegroundColour(*wxWHITE);
+    trackBtn->SetToolTip("Voir le suivi de livraison");
     btnSizer->Add(trackBtn, 0, wxRIGHT, 10);
 
     wxButton* reorderBtn = new wxButton(m_ordersPage, ID_REORDER, "Commander a nouveau",
                                         wxDefaultPosition, wxSize(180, 40));
-    reorderBtn->SetBackgroundColour(wxColour(40, 167, 69));
+    reorderBtn->SetBackgroundColour(Theme::Success());
     reorderBtn->SetForegroundColour(*wxWHITE);
+    reorderBtn->SetToolTip("Recommander ces produits");
     btnSizer->Add(reorderBtn, 0);
 
     pageSizer->Add(btnSizer, 0, wxALL | wxLEFT, 10);
@@ -183,13 +187,15 @@ void ClientSupportFrame::CreateClaimsPage()
 
     wxButton* newClaimBtn = new wxButton(m_claimsPage, ID_NEW_CLAIM, "Nouvelle reclamation",
                                          wxDefaultPosition, wxSize(180, 40));
-    newClaimBtn->SetBackgroundColour(wxColour(220, 53, 69));
+    newClaimBtn->SetBackgroundColour(Theme::Danger());
     newClaimBtn->SetForegroundColour(*wxWHITE);
+    newClaimBtn->SetToolTip("Créer une nouvelle réclamation");
     btnSizer->Add(newClaimBtn, 0, wxRIGHT, 10);
 
     wxButton* returnBtn = new wxButton(m_claimsPage, ID_REQUEST_RETURN, "Demander un retour",
                                        wxDefaultPosition, wxSize(180, 40));
-    returnBtn->SetBackgroundColour(wxColour(255, 193, 7));
+    returnBtn->SetBackgroundColour(Theme::Warning());
+    returnBtn->SetToolTip("Demander le retour d'un produit");
     btnSizer->Add(returnBtn, 0);
 
     pageSizer->Add(btnSizer, 0, wxALL | wxLEFT, 10);
@@ -219,11 +225,11 @@ void ClientSupportFrame::LoadOrders()
 
         // Couleur selon statut
         if(o.statut == "Livree")
-            m_ordersList->SetItemTextColour(idx, wxColour(40, 167, 69));
+            m_ordersList->SetItemTextColour(idx, Theme::Success());
         else if(o.statut == "En cours")
-            m_ordersList->SetItemTextColour(idx, wxColour(255, 140, 0));
+            m_ordersList->SetItemTextColour(idx, Theme::Accent());
         else
-            m_ordersList->SetItemTextColour(idx, wxColour(0, 123, 255));
+            m_ordersList->SetItemTextColour(idx, Theme::Primary());
 
         // Stocker l'ID
         m_ordersList->SetItemData(idx, o.id);
@@ -250,11 +256,11 @@ void ClientSupportFrame::LoadClaims()
 
         // Couleur selon statut
         if(r.statut == "Nouveau")
-            m_claimsList->SetItemTextColour(idx, wxColour(220, 53, 69));
+            m_claimsList->SetItemTextColour(idx, Theme::Danger());
         else if(r.statut == "En cours")
-            m_claimsList->SetItemTextColour(idx, wxColour(255, 193, 7));
+            m_claimsList->SetItemTextColour(idx, Theme::Warning());
         else
-            m_claimsList->SetItemTextColour(idx, wxColour(40, 167, 69));
+            m_claimsList->SetItemTextColour(idx, Theme::Success());
 
         m_claimsList->SetItemData(idx, r.id);
     }
