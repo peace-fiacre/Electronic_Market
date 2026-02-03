@@ -20,7 +20,9 @@ class ElectronicMarketFrame: public wxFrame
 {
     public:
 
-        ElectronicMarketFrame(wxWindow* parent,wxWindowID id = -1);
+        ElectronicMarketFrame(wxWindow* parent,wxWindowID id = -1,
+                              const wxString& userType = wxEmptyString,
+                              const wxString& username = wxEmptyString);
         virtual ~ElectronicMarketFrame();
 
     private:
@@ -39,6 +41,10 @@ class ElectronicMarketFrame: public wxFrame
         //(*Declarations(ElectronicMarketFrame)
         wxStatusBar* StatusBar1;
         //*)
+
+        // Informations utilisateur (affichees dans la barre d'etat)
+        wxString m_userType;
+        wxString m_username;
 
         DECLARE_EVENT_TABLE()
 };

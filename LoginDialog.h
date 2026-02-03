@@ -28,6 +28,7 @@ private:
     wxTextCtrl* m_passwordCtrl;
     wxRadioButton* m_clientRadio;
     wxRadioButton* m_adminRadio;
+    wxRadioButton* m_delivererRadio;
 
     wxString m_userType;
     wxString m_username;
@@ -36,7 +37,8 @@ private:
     {
         ID_LOGIN = wxID_HIGHEST + 1,
         ID_CLIENT_RADIO,
-        ID_ADMIN_RADIO
+        ID_ADMIN_RADIO,
+        ID_DELIVERER_RADIO
     };
 
     wxDECLARE_EVENT_TABLE();

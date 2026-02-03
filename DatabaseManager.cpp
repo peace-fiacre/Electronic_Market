@@ -198,7 +198,8 @@ std::vector<Product> DatabaseManager::GetAllProducts()
 
     sqlite3_finalize(stmt);
 
-    wxLogMessage("Charge %zu produits depuis la base de donnees", products.size());
+    // Utiliser wxLogDebug pour éviter les dialogues modaux qui interrompent l'execution
+    wxLogDebug("Charge %zu produits depuis la base de donnees", products.size());
 
     return products;
 }
@@ -617,7 +618,7 @@ bool DatabaseManager::InitializeSampleData()
                "21 vitesses, suspension avant",
                "Sports", 125000, 10);
 
-    wxLogMessage("Base de donnees initialisee avec 20 produits de demonstration");
+    wxLogDebug("Base de donnees initialisee avec 20 produits de demonstration");
     return true;
 
 

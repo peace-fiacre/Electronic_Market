@@ -16,6 +16,7 @@
 #include <wx/msgdlg.h>
 #include <iostream>
 #include "ClientSupportFrame.h"
+#include "LoginDialog.h"
 
 
 //(*InternalHeaders(ElectronicMarketFrame)
@@ -60,7 +61,10 @@ BEGIN_EVENT_TABLE(ElectronicMarketFrame,wxFrame)
     //*)
 END_EVENT_TABLE()
 
-ElectronicMarketFrame::ElectronicMarketFrame(wxWindow* parent,wxWindowID id)
+ElectronicMarketFrame::ElectronicMarketFrame(wxWindow* parent,wxWindowID id,
+                                             const wxString& userType,
+                                             const wxString& username)
+    : m_userType(userType), m_username(username)
 {
     //(*Initialize(ElectronicMarketFrame)
     wxMenu* Menu1;
@@ -99,7 +103,18 @@ ElectronicMarketFrame::ElectronicMarketFrame(wxWindow* parent,wxWindowID id)
     titleFont.SetPointSize(22);
     titleFont.SetWeight(wxFONTWEIGHT_BOLD);
     titleText->SetFont(titleFont);
-    mainSizer->Add(titleText, 0, wxALL | wxCENTER, 20);
+
+    // Header : titre + bouton deconnexion
+    wxBoxSizer* headerSizer = new wxBoxSizer(wxHORIZONTAL);
+    headerSizer->Add(titleText, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, 20);
+
+    wxButton* logoutBtn = new wxButton(panel, wxID_ANY, "Se deconnecter",
+                                        wxDefaultPosition, wxSize(140, 40));
+    logoutBtn->SetBackgroundColour(wxColour(220, 53, 69));
+    logoutBtn->SetForegroundColour(*wxWHITE);
+    headerSizer->Add(logoutBtn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 30);
+
+    mainSizer->Add(headerSizer, 0, wxALL | wxEXPAND, 0);
 
     mainSizer->AddSpacer(10);
 
@@ -224,6 +239,41 @@ ElectronicMarketFrame::ElectronicMarketFrame(wxWindow* parent,wxWindowID id)
         ServiceClientFrame* frame = new ServiceClientFrame(NULL);
         frame->Show();
     });
+
+    // Déconnexion complète : fermer la frame courante et rouvrir une nouvelle instance
+    logoutBtn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        LoginDialog loginDlg(this);
+        if(loginDlg.ShowModal() == wxID_OK)
+        {
+            wxString newType = loginDlg.GetUserType();
+            wxString newUser = loginDlg.GetUsername();
+
+            // Créer une nouvelle fenêtre principale pour la nouvelle session
+            ElectronicMarketFrame* newFrame = new ElectronicMarketFrame(NULL, -1, newType, newUser);
+            newFrame->Show();
+
+            // Définir la nouvelle fenêtre comme top window de l'application
+            if(wxTheApp)
+                wxTheApp->SetTopWindow(newFrame);
+
+            // Détruire l'ancienne fenêtre après que la nouvelle soit visible
+            wxWindow* old = this;
+            // Utiliser CallAfter sur l'ancienne fenêtre pour la détruire après l'événement courant
+            old->CallAfter([old]() {
+                if(old && old->IsShown())
+                    old->Destroy();
+            });
+        }
+    });
+
+    // Afficher le type d'utilisateur dans la barre d'etat si disponible
+    if(!m_username.IsEmpty() || !m_userType.IsEmpty())
+    {
+        wxString info = wxString::Format("Utilisateur : %s (%s)",
+                                         m_username.IsEmpty() ? "-" : m_username,
+                                         m_userType.IsEmpty() ? "-" : m_userType);
+        StatusBar1->SetStatusText(info);
+    }
 
     SetSize(650, 850);
     Centre();
